@@ -53,6 +53,8 @@ class App {
             ntpStatusText: document.getElementById('ntp-status-text'),
             ntpOffsetVal: document.getElementById('ntp-offset-val'),
             ntpRttVal: document.getElementById('ntp-rtt-val'),
+            ntpJitterVal: document.getElementById('ntp-jitter-val'),
+            ntpColoVal: document.getElementById('ntp-colo-val'),
             clockDisplay: document.getElementById('clock-display'),
             clockTzInfo: document.getElementById('clock-tz-info'),
             btnStartStop: document.getElementById('btn-start-stop'),
@@ -113,12 +115,16 @@ class App {
                 this.dom.ntpStatusText.textContent = `${this.i18n.t('ntpStatusSynced')} (${info.source})`;
                 this.dom.ntpOffsetVal.textContent = `${info.offsetMs >= 0 ? '+' : ''}${info.offsetMs} ms`;
                 this.dom.ntpRttVal.textContent = `${info.rttMs} ms`;
+                if (this.dom.ntpJitterVal) this.dom.ntpJitterVal.textContent = `±${info.jitterMs} ms`;
+                if (this.dom.ntpColoVal) this.dom.ntpColoVal.textContent = info.colo || 'EDGE';
             } else if (info.status === 'syncing') {
                 this.dom.ntpStatusText.textContent = this.i18n.t('ntpStatusSyncing');
             } else {
                 this.dom.ntpStatusText.textContent = this.i18n.t('ntpStatusFailed');
                 this.dom.ntpOffsetVal.textContent = '0 ms';
                 this.dom.ntpRttVal.textContent = '--';
+                if (this.dom.ntpJitterVal) this.dom.ntpJitterVal.textContent = '±0.0 ms';
+                if (this.dom.ntpColoVal) this.dom.ntpColoVal.textContent = 'LOCAL';
             }
         });
 
