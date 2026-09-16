@@ -1,0 +1,17 @@
+{
+  "name": "9M2PJU WebTimeSignal",
+  "short_name": "WebTimeSignal",
+  "description": "Browser-based LF Radio Time Signal Transmitter for Radio Clocks",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#238636",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,78 +1,202 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Web JJY</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>
-      canvas {
-        width: 100%;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>JJYシミュレータWeb版</h1>
-    <p>
-      Web Audioを駆使して標準電波JJYの信号を再現します。
-      以下の「Start」ボタンを押すと信号の送信が始まります。
-    </p>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>9M2PJU WebTimeSignal - Radio Time Signal Transmitter</title>
+    <meta name="description" content="Browser-based LF Radio Time Signal Transmitter & Clock Synchronizer for JJY, WWVB, DCF77, MSF, and BPC radio-controlled timepieces.">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#238636">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-brand">
+                <h1>
+                    <span data-i18n="title">9M2PJU WebTimeSignal</span>
+                    <span class="badge">v2.0</span>
+                </h1>
+                <p data-i18n="subtitle">Browser-based LF Radio Time Signal Transmitter & Clock Synchronizer</p>
+            </div>
+            <div class="header-controls">
+                <select id="lang-select" aria-label="Language selector">
+                    <option value="en">English (EN)</option>
+                    <option value="ms">Bahasa Melayu (MS)</option>
+                    <option value="ja">日本語 (JA)</option>
+                </select>
+                <button id="theme-toggle" class="btn btn-secondary btn-sm" aria-label="Toggle theme">☀️</button>
+            </div>
+        </header>
 
-    <button id="control-button">Start</button> <span id="time"></span>
-    <div>
-      <canvas id="canvas" width="1000" height="200"></canvas>
+        <!-- Main Action & Clock Panel -->
+        <section class="action-panel">
+            <div class="clock-display-row">
+                <div>
+                    <div id="clock-display" class="digital-clock">00:00:00.0</div>
+                    <div id="clock-tz-info" class="digital-clock-sub">Loading time...</div>
+                </div>
+                <div class="ntp-pill">
+                    <span id="ntp-status-dot" class="status-dot syncing"></span>
+                    <span id="ntp-status-text" data-i18n="ntpStatusSyncing">Synchronizing with atomic time servers...</span>
+                    <button id="btn-ntp-sync" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;" data-i18n="syncNtp">Sync NTP</button>
+                </div>
+            </div>
+
+            <div class="main-buttons">
+                <button id="btn-start-stop" class="btn btn-primary" data-i18n="start">Start Transmission</button>
+                <button id="btn-test-tone" class="btn btn-secondary" data-i18n="testTone">Test 1s Carrier Tone</button>
+            </div>
+        </section>
+
+        <!-- Configuration Settings Grid -->
+        <section class="grid-2">
+            <!-- Left Card: Protocol & Time Settings -->
+            <div class="card">
+                <h3 class="card-title">
+                    <span data-i18n="protocol">Time Signal Standard</span>
+                </h3>
+
+                <div class="form-group">
+                    <label for="protocol-select" data-i18n="protocol">Time Signal Standard</label>
+                    <select id="protocol-select">
+                        <option value="JJY40">JJY 40 kHz - Japan (Mount Otakadoya, Fukushima)</option>
+                        <option value="JJY60">JJY 60 kHz - Japan (Mount Hagane, Saga/Fukuoka)</option>
+                        <option value="WWVB">WWVB 60 kHz - USA (NIST Fort Collins, CO)</option>
+                        <option value="DCF77">DCF77 77.5 kHz - Germany / Europe (PTB Mainflingen)</option>
+                        <option value="MSF">MSF 60 kHz - UK (NPL Anthorn, Cumbria)</option>
+                        <option value="BPC">BPC 68.5 kHz - China (Shangqiu, Henan)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-summertime">
+                        <span data-i18n="summerTime">Enable Summer Time / Daylight Saving Time (DST)</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-custom-time">
+                        <span data-i18n="customTimeToggle">Manual Time Override / Custom Timezone</span>
+                    </label>
+                    <div id="custom-time-group" style="display: none; margin-top: 0.5rem;">
+                        <input type="datetime-local" id="custom-time-input" style="padding: 0.4rem; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); width: 100%;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Card: Audio & RF Enhancements -->
+            <div class="card">
+                <h3 class="card-title">
+                    <span>Audio & RF Optimizations</span>
+                </h3>
+
+                <div class="form-group">
+                    <label data-i18n="volume">Output Volume</label>
+                    <div class="slider-container">
+                        <input type="range" id="volume-slider" min="0.0" max="1.0" step="0.05" value="1.0">
+                        <span id="volume-val" style="font-weight: bold; min-width: 40px;">100%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-antiphase" checked>
+                        <span data-i18n="stereoAntiPhase">Anti-Phase Differential Stereo Drive (2x Coil Voltage)</span>
+                    </label>
+                    <div class="setting-desc" data-i18n="stereoAntiPhaseDesc">
+                        Inverts Right audio channel 180° to double magnetic flux induction across earphone coils.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-overdrive" checked>
+                        <span data-i18n="harmonicOverdrive">WaveShaper Harmonic Overdrive</span>
+                    </label>
+                    <div class="setting-desc" data-i18n="harmonicOverdriveDesc">
+                        Enhances steep square wave transitions for stronger 3rd/5th harmonic RF radiation.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Real-Time Signal Inspector & Visualizer -->
+        <section class="card">
+            <h3 class="card-title">
+                <span data-i18n="bitstreamTitle">60-Second Real-Time Frame Inspector</span>
+                <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary);"><span data-i18n="offset">Offset</span>: <span id="ntp-offset-val">0 ms</span> | <span data-i18n="rtt">RTT</span>: <span id="ntp-rtt-val">--</span></span>
+            </h3>
+
+            <div class="canvas-wrapper">
+                <canvas id="oscilloscope-canvas" width="1000" height="90"></canvas>
+            </div>
+
+            <div id="inspector-grid" class="frame-inspector"></div>
+
+            <div class="symbol-legend">
+                <div class="legend-item">
+                    <span class="legend-color marker"></span>
+                    <span>Marker / Position Pulse</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color bit1"></span>
+                    <span>Binary 1 (0.5s / 0.2s)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color bit0"></span>
+                    <span>Binary 0 (0.8s / 0.1s)</span>
+                </div>
+            </div>
+
+            <div class="info-strip" style="margin-top: 1rem;">
+                <div><strong><span data-i18n="currentSec">Second</span>:</strong> <span id="active-sec-val">--</span></div>
+                <div><strong><span data-i18n="symbolType">Symbol</span>:</strong> <span id="active-symbol-val">--</span></div>
+                <div><strong><span data-i18n="fieldLabel">Field</span>:</strong> <span id="active-field-val">--</span></div>
+            </div>
+        </section>
+
+        <!-- Safety Alert -->
+        <div class="alert-box">
+            <h4 data-i18n="safetyTitle">⚠️ Safety Warning & Hearing Protection</h4>
+            <p data-i18n="safetyText">
+                DO NOT PUT EARPHONES IN OR NEAR YOUR EARS. This software emits high-amplitude high-frequency square waves (12–20 kHz) at 100% volume. Place earphones directly on or around the clock body only.
+            </p>
+        </div>
+
+        <!-- Documentation & Guide Accordions -->
+        <details>
+            <summary data-i18n="instructionsTitle">How to Use</summary>
+            <ol style="margin-top: 0.75rem;">
+                <li data-i18n="step1">1. Connect standard wired earphones into the headphone jack or USB-C/Lightning audio adapter.</li>
+                <li data-i18n="step2">2. Wrap the earphone cable 2 to 4 times around your radio-controlled clock near its internal antenna.</li>
+                <li data-i18n="step3">3. Set your device volume to 100% (Maximum).</li>
+                <li data-i18n="step4">4. Click 'Start Transmission' and trigger manual reception (REC/WAVE) on your watch/clock.</li>
+                <li data-i18n="step5">5. Wait 2 to 5 minutes for the timepiece to receive and validate 2–3 full frames, then click 'Stop'.</li>
+            </ol>
+        </details>
+
+        <details>
+            <summary data-i18n="theoryTitle">Operating Theory</summary>
+            <p data-i18n="theoryText">
+                Consumer audio sound cards cannot output 40–77.5 kHz directly due to the 20 kHz DAC ceiling. This tool generates high-amplitude square waves whose strong 3rd or 5th odd harmonics (e.g. 13.333 kHz × 3 = 40.0 kHz, 15.5 kHz × 5 = 77.5 kHz) radiate electromagnetic signals picked up by the timepiece's internal ferrite coil.
+            </p>
+        </details>
+
+        <!-- Footer -->
+        <footer>
+            <p><span data-i18n="footer">Open-source project maintained by 9M2PJU. Based on original concept by shogo82148.</span></p>
+            <p style="margin-top: 0.4rem;">
+                <a href="tests/index.html">Run Test Suite</a> &bull;
+                <a href="https://github.com/9M2PJU/9M2PJU-WebTimeSignal" target="_blank" rel="noopener">GitHub Repository</a>
+            </p>
+        </footer>
     </div>
-    <label><input id="summer-time" type="checkbox">夏時間を有効にする</label>
-    <script src="jjy.js"></script>
 
-    <h2>このソフトについて</h2>
-    <p>
-      電波時計の時刻合わせには、<a href="http://jjy.nict.go.jp/jjy/">標準電波JJY</a>と呼ばれる
-      時刻に関する情報を送信している電波が使われています。
-      このシミュレータは、この電波をブラウザ上で再現し、標準電波が届かない環境でも電波時計の時刻合わせを可能にします。
-    </p>
-
-    <h2>使い方</h2>
-    <p>
-      パソコンのイヤホンジャックにアンテナ(普通のイヤホンで十分です)を接続し、電波時計の近くに置きます。
-      音量を最大にし、「Start」ボタンを押すと信号が送信されます。
-      電波時計を強制受信モードにし、時刻が設定されるのを待ちましょう。
-    </p>
-    <p>
-      このページではパソコン自体の時刻を調整する機能はないので、
-      事前にNTPでパソコン自体の時刻設定を行っておくといいと思います。
-    </p>
-
-    <h2>免責事項</h2>
-    <p>
-      ※ 利用の結果生じた損害について、一切責任を負いません。
-    </p>
-
-    <h2>動作環境</h2>
-    <p>MacBook Air + Google Chrome 48.0.2564.116 + CITIZEN 8RZ152 で動作を確認しています。</p>
-
-    <h2>原理</h2>
-    <p>
-      標準電波は40kHzまたは60kHzの電波です。
-      電気が流れればそこには必ず電波が発生するので、イヤホンにこの周波数の信号を音声として流せば、それだけで立派なアンテナになります。
-    </p>
-    <p>
-      ただし、一般的な音声アンプは人間の可聴域である20kHz以上の周波数の再生には適していません。
-      そこで、歪んだ波形に含まれる高調波を利用します。
-      ボリュームを大きくして音が割れた状態になると、音声信号は矩形波に近いかたちになります。
-      13.333kHzの矩形波にはその3倍の39.999kHzの周波数成分が含まれるので、約40kHzの電波が出せるというわけです。
-      詳しくは<a href="http://www.starstonesoft.com/jjy_simulator.htm">フリーソフト電波時計用JJYシミュレータのページ</a>を参照してください。
-    </p>
-
-    <h2>ライセンス</h2>
-    <p>MITライセンスで提供します。<a href="https://github.com/shogo82148/web-jjy/blob/gh-pages/LICENSE.md">LICENSE.md<a>を参照してください。</p>    
-
-    <h2>関連リンク</h2>
-    <p>
-      <ul>
-        <li><a href="https://github.com/shogo82148/web-jjy">shogo82148/web-jjy</a></li>
-        <li><a href="https://shogo82148.github.io/blog/2016/03/29/web-jjy/">Webブラウザを使って電波を出してみた</a></li>
-        <li><a href="https://shogo82148.github.io/blog/2018/08/11/web-jjy-summer-time-support/">Web JJY が夏時間に対応しました</a></li>
-      </ul>
-    </p>
-
-  </body>
+    <script type="module" src="js/app.js"></script>
+</body>
 </html>

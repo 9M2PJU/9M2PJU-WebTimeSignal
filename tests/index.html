@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebTimeSignal - Unit Test Suite</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #f0f6fc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { margin-bottom: 0.5rem; }
+        .summary {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .summary.pass { background-color: rgba(35, 134, 54, 0.2); border: 1px solid #238636; color: #3fb950; }
+        .summary.fail { background-color: rgba(218, 54, 51, 0.2); border: 1px solid #da3633; color: #f85149; }
+        .test-item {
+            padding: 0.75rem 1rem;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .badge.pass { background: #238636; color: #fff; }
+        .badge.fail { background: #da3633; color: #fff; }
+        .error-msg {
+            color: #f85149;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+        a { color: #58a6ff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <h1>9M2PJU WebTimeSignal Test Suite</h1>
+    <p><a href="../index.html">← Back to Application</a></p>
+    <div id="summary" class="summary">Running tests...</div>
+    <div id="test-list"></div>
+
+    <script type="module">
+        import { TestRunner, registerAllTests } from './test-suite.js';
+
+        const runner = new TestRunner();
+        registerAllTests(runner);
+
+        runner.runAll().then(res => {
+            const summary = document.getElementById('summary');
+            const list = document.getElementById('test-list');
+
+            if (res.failed === 0) {
+                summary.className = 'summary pass';
+                summary.textContent = `All ${res.total} tests PASSED!`;
+            } else {
+                summary.className = 'summary fail';
+                summary.textContent = `${res.failed} of ${res.total} tests FAILED.`;
+            }
+
+            list.innerHTML = '';
+            for (const r of res.results) {
+                const item = document.createElement('div');
+                item.className = 'test-item';
+                item.innerHTML = `
+                    <div>
+                        <div>${r.name}</div>
+                        ${r.error ? `<div class="error-msg">${r.error}</div>` : ''}
+                    </div>
+                    <span class="badge ${r.status.toLowerCase()}">${r.status}</span>
+                `;
+                list.appendChild(item);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+/**
+ * 9M2PJU WebTimeSignal - Main Application Controller
+ */
+
+import { I18n } from './i18n.js';
+import { NTPSync } from './ntp-sync.js';
+import { AudioEngine } from './audio-engine.js';
+import { JJYEncoder } from './encoders/jjy.js';
+import { WWVBEncoder } from './encoders/wwvb.js';
+import { DCF77Encoder } from './encoders/dcf77.js';
+import { MSFEncoder } from './encoders/msf.js';
+import { BPCEncoder } from './encoders/bpc.js';
+
+class App {
+    constructor() {
+        this.i18n = new I18n();
+        this.ntp = new NTPSync();
+        this.audio = new AudioEngine();
+
+        // Encoders catalog
+        this.encoders = {
+            'JJY40': new JJYEncoder(40),
+            'JJY60': new JJYEncoder(60),
+            'WWVB': new WWVBEncoder(),
+            'DCF77': new DCF77Encoder(),
+            'MSF': new MSFEncoder(),
+            'BPC': new BPCEncoder()
+        };
+
+        this.currentEncoder = this.encoders['JJY40'];
+        this.currentFrame = null;
+        this.isTransmitting = false;
+
+        this.dom = {};
+        this._bindDOM();
+        this._bindEvents();
+        this._initInspectorGrid();
+        this._initClockLoop();
+        this._initVisualizer();
+
+        // Auto sync with NTP on startup
+        this.ntp.sync();
+        this.i18n.updateDOM();
+    }
+
+    _bindDOM() {
+        this.dom = {
+            langSelect: document.getElementById('lang-select'),
+            themeToggle: document.getElementById('theme-toggle'),
+            protocolSelect: document.getElementById('protocol-select'),
+            ntpSyncBtn: document.getElementById('btn-ntp-sync'),
+            ntpDot: document.getElementById('ntp-status-dot'),
+            ntpStatusText: document.getElementById('ntp-status-text'),
+            ntpOffsetVal: document.getElementById('ntp-offset-val'),
+            ntpRttVal: document.getElementById('ntp-rtt-val'),
+            clockDisplay: document.getElementById('clock-display'),
+            clockTzInfo: document.getElementById('clock-tz-info'),
+            btnStartStop: document.getElementById('btn-start-stop'),
+            btnTestTone: document.getElementById('btn-test-tone'),
+            volumeSlider: document.getElementById('volume-slider'),
+            volumeVal: document.getElementById('volume-val'),
+            antiPhaseToggle: document.getElementById('toggle-antiphase'),
+            overdriveToggle: document.getElementById('toggle-overdrive'),
+            summerTimeToggle: document.getElementById('toggle-summertime'),
+            customTimeToggle: document.getElementById('toggle-custom-time'),
+            customTimeGroup: document.getElementById('custom-time-group'),
+            customTimeInput: document.getElementById('custom-time-input'),
+            inspectorGrid: document.getElementById('inspector-grid'),
+            canvas: document.getElementById('oscilloscope-canvas'),
+            activeSecVal: document.getElementById('active-sec-val'),
+            activeSymbolVal: document.getElementById('active-symbol-val'),
+            activeFieldVal: document.getElementById('active-field-val')
+        };
+    }
+
+    _bindEvents() {
+        // Language Switcher
+        this.dom.langSelect.value = this.i18n.currentLang;
+        this.dom.langSelect.addEventListener('change', (e) => {
+            this.i18n.setLanguage(e.target.value);
+            this._updateClockDisplay();
+        });
+
+        // Theme Switcher
+        this.dom.themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            this.dom.themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+        });
+
+        // Protocol Selection
+        this.dom.protocolSelect.addEventListener('change', (e) => {
+            const code = e.target.value;
+            if (this.encoders[code]) {
+                this.currentEncoder = this.encoders[code];
+                if (this.isTransmitting) {
+                    this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
+                }
+                this._renderStaticFrame();
+            }
+        });
+
+        // NTP Sync Button
+        this.dom.ntpSyncBtn.addEventListener('click', () => {
+            this.ntp.sync();
+        });
+
+        // NTP Updates
+        this.ntp.onChange((info) => {
+            this.dom.ntpDot.className = `status-dot ${info.status === 'synced' ? 'synced' : (info.status === 'syncing' ? 'syncing' : 'error')}`;
+            if (info.status === 'synced') {
+                this.dom.ntpStatusText.textContent = `${this.i18n.t('ntpStatusSynced')} (${info.source})`;
+                this.dom.ntpOffsetVal.textContent = `${info.offsetMs >= 0 ? '+' : ''}${info.offsetMs} ms`;
+                this.dom.ntpRttVal.textContent = `${info.rttMs} ms`;
+            } else if (info.status === 'syncing') {
+                this.dom.ntpStatusText.textContent = this.i18n.t('ntpStatusSyncing');
+            } else {
+                this.dom.ntpStatusText.textContent = this.i18n.t('ntpStatusFailed');
+                this.dom.ntpOffsetVal.textContent = '0 ms';
+                this.dom.ntpRttVal.textContent = '--';
+            }
+        });
+
+        // Start / Stop Transmission
+        this.dom.btnStartStop.addEventListener('click', () => {
+            if (this.isTransmitting) {
+                this._stopTransmission();
+            } else {
+                this._startTransmission();
+            }
+        });
+
+        // Test Tone
+        this.dom.btnTestTone.addEventListener('click', () => {
+            this.audio.playTestTone(this.currentEncoder.baseAudioFrequency);
+        });
+
+        // Volume
+        this.dom.volumeSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            this.audio.setVolume(val);
+            this.dom.volumeVal.textContent = `${Math.round(val * 100)}%`;
+        });
+
+        // Toggles
+        this.dom.antiPhaseToggle.addEventListener('change', (e) => {
+            this.audio.setStereoAntiPhase(e.target.checked);
+        });
+
+        this.dom.overdriveToggle.addEventListener('change', (e) => {
+            this.audio.setHarmonicOverdrive(e.target.checked);
+        });
+
+        this.dom.summerTimeToggle.addEventListener('change', () => {
+            if (this.isTransmitting) {
+                this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
+            }
+            this._renderStaticFrame();
+        });
+
+        // Custom Time Override Toggle
+        this.dom.customTimeToggle.addEventListener('change', (e) => {
+            this.dom.customTimeGroup.style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        // Audio Engine callbacks
+        this.audio.onSecondChange = (sec, symbolInfo, frame) => {
+            this.currentFrame = frame;
+            this._highlightSecond(sec, symbolInfo);
+        };
+
+        this.audio.onStatusChange = (running) => {
+            this.isTransmitting = running;
+            this.dom.btnStartStop.className = running ? 'btn btn-danger' : 'btn btn-primary';
+            this.dom.btnStartStop.textContent = running ? this.i18n.t('stop') : this.i18n.t('start');
+        };
+    }
+
+    _getOptions() {
+        return {
+            summerTime: this.dom.summerTimeToggle.checked,
+            leapSecond: 0
+        };
+    }
+
+    _getCurrentTime() {
+        if (this.dom.customTimeToggle.checked && this.dom.customTimeInput.value) {
+            return new Date(this.dom.customTimeInput.value);
+        }
+        return this.ntp.getNow();
+    }
+
+    _startTransmission() {
+        this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
+    }
+
+    _stopTransmission() {
+        this.audio.stop();
+        this._clearHighlight();
+    }
+
+    _initInspectorGrid() {
+        this.dom.inspectorGrid.innerHTML = '';
+        for (let i = 0; i < 60; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.id = `cell-${i}`;
+            cell.textContent = i < 10 ? `0${i}` : `${i}`;
+            this.dom.inspectorGrid.appendChild(cell);
+        }
+        this._renderStaticFrame();
+    }
+
+    _renderStaticFrame() {
+        const date = this._getCurrentTime();
+        const frame = this.currentEncoder.encodeFrame(date, this._getOptions());
+        for (let i = 0; i < 60; i++) {
+            const cell = document.getElementById(`cell-${i}`);
+            if (!cell) continue;
+            const sym = frame[i];
+            cell.className = 'cell';
+            if (sym.type === 'marker') {
+                cell.classList.add(sym.toneDuration === 0 ? 'missing' : 'marker');
+            } else if (sym.bitValue === 1) {
+                cell.classList.add('bit1');
+            } else {
+                cell.classList.add('bit0');
+            }
+            cell.title = `Sec ${i}: ${sym.label} (${sym.symbol}, ${Math.round(sym.toneDuration * 1000)}ms)`;
+        }
+    }
+
+    _highlightSecond(sec, symbolInfo) {
+        document.querySelectorAll('.cell.current').forEach(el => el.classList.remove('current'));
+        const cell = document.getElementById(`cell-${sec}`);
+        if (cell) {
+            cell.classList.add('current');
+        }
+
+        if (symbolInfo) {
+            this.dom.activeSecVal.textContent = sec < 10 ? `0${sec}` : `${sec}`;
+            this.dom.activeSymbolVal.textContent = `${symbolInfo.symbol} (${Math.round(symbolInfo.toneDuration * 1000)}ms)`;
+            this.dom.activeFieldVal.textContent = symbolInfo.label;
+        }
+    }
+
+    _clearHighlight() {
+        document.querySelectorAll('.cell.current').forEach(el => el.classList.remove('current'));
+        this.dom.activeSecVal.textContent = '--';
+        this.dom.activeSymbolVal.textContent = '--';
+        this.dom.activeFieldVal.textContent = '--';
+    }
+
+    _initClockLoop() {
+        const update = () => {
+            this._updateClockDisplay();
+            requestAnimationFrame(update);
+        };
+        requestAnimationFrame(update);
+    }
+
+    _updateClockDisplay() {
+        const now = this._getCurrentTime();
+        const pad = (n) => (n < 10 ? '0' + n : n);
+        const hours = pad(now.getHours());
+        const minutes = pad(now.getMinutes());
+        const seconds = pad(now.getSeconds());
+        const ms = String(Math.floor(now.getMilliseconds() / 100));
+
+        this.dom.clockDisplay.textContent = `${hours}:${minutes}:${seconds}.${ms}`;
+        this.dom.clockTzInfo.textContent = `${now.toDateString()} (UTC${now.getTimezoneOffset() <= 0 ? '+' : ''}${-now.getTimezoneOffset() / 60})`;
+    }
+
+    _initVisualizer() {
+        const canvas = this.dom.canvas;
+        const ctx = canvas.getContext('2d');
+
+        const draw = () => {
+            requestAnimationFrame(draw);
+            ctx.fillStyle = '#05070a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!this.audio.analyser || !this.isTransmitting) {
+                // Idle baseline
+                ctx.strokeStyle = '#21262d';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.stroke();
+                return;
+            }
+
+            const bufferLength = this.audio.analyser.fftSize;
+            const dataArray = new Uint8Array(bufferLength);
+            this.audio.analyser.getByteTimeDomainData(dataArray);
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#58a6ff';
+            ctx.beginPath();
+
+            const sliceWidth = canvas.width * 1.0 / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * canvas.height / 2;
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
+            }
+
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+        };
+
+        draw();
+    }
+}
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => {
+            console.warn('ServiceWorker registration failed:', err);
+        });
+    });
+}
+
+// Bootstrap
+window.addEventListener('DOMContentLoaded', () => {
+    window.app = new App();
+});

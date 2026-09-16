@@ -224,27 +224,57 @@ stateDiagram-v2
 
 ---
 
-## Current Codebase Architecture
+## Codebase Architecture
 
-* [`index.html`](file:///home/x/9M2PJU-WebTimeSignal/index.html): Responsive single-page interface with a 60-second frame Canvas visualizer and controls.
-* [`jjy.js`](file:///home/x/9M2PJU-WebTimeSignal/jjy.js): Core signal generator:
-  * [`AudioContext`](file:///home/x/9M2PJU-WebTimeSignal/jjy.js#L6) setup and 13.333 kHz square wave synthesis.
-  * [`schedule()`](file:///home/x/9M2PJU-WebTimeSignal/jjy.js#L25-L176): 60-second BCD time frame builder, parity calculator, and Web Audio node scheduler.
-  * [`render()`](file:///home/x/9M2PJU-WebTimeSignal/jjy.js#L239-L263): HTML5 Canvas real-time bit inspector rendering duty cycle bars.
+The project is structured into clean, modular ES6 components:
+
+```
+9M2PJU-WebTimeSignal/
+├── index.html                   # Modern responsive interface with multi-language & theme support
+├── manifest.webmanifest         # Progressive Web App (PWA) manifest
+├── sw.js                        # Service Worker for 100% offline operation
+├── css/
+│   └── app.css                  # Responsive design, Dark/Light theme, bitstream inspector styling
+├── js/
+│   ├── app.js                   # Application bootstrap and UI controller
+│   ├── i18n.js                  # Internationalization (English, Bahasa Melayu, 日本語)
+│   ├── audio-engine.js          # Web Audio engine with Anti-Phase Differential Drive & Lookahead
+│   ├── ntp-sync.js              # Network Time Protocol (NTP) offset synchronization
+│   ├── worker-timer.js          # Background Web Worker heartbeat timer
+│   └── encoders/
+│       ├── base-encoder.js      # Common BCD conversion, Day-of-Year, and parity calculations
+│       ├── jjy.js               # JJY 40 kHz & 60 kHz encoder (Japan)
+│       ├── wwvb.js              # WWVB 60 kHz encoder (USA / NIST)
+│       ├── dcf77.js             # DCF77 77.5 kHz encoder (Germany / PTB)
+│       ├── msf.js               # MSF 60 kHz encoder (UK / Anthorn)
+│       └── bpc.js               # BPC 68.5 kHz encoder (China / Shangqiu)
+├── tests/
+│   ├── index.html               # In-browser visual unit test runner
+│   ├── test-suite.js            # Comprehensive test suite covering all encoders and parity logic
+│   └── run-node-tests.js        # Node.js CLI test runner
+├── icons/
+│   └── icon.svg                 # Scalable vector application icon
+├── package.json                 # Project metadata & npm test script
+├── README.md                    # Comprehensive documentation and technical specifications
+└── LICENSE.md                   # MIT License
+```
 
 ---
 
-## Roadmap & Planned Enhancements
+## Implemented Enhancements Matrix
 
-| Feature | Description | Status |
-|---|---|:---:|
-| **JJY 60 kHz Support** | Support for Mount Hagane (Saga/Fukuoka) transmitter via 20 kHz (3rd) or 12 kHz (5th) harmonic | Planned |
-| **WWVB / DCF77 / MSF / BPC** | Multi-protocol selector for US, European, UK, and Chinese radio clocks | Planned |
-| **Stereo Anti-Phase Drive** | Drive Left channel at $+1$ and Right channel at $-1$ ($180^\circ$ phase inversion) to double peak-to-peak coil voltage | Planned |
-| **Web NTP Synchronization** | Direct network time synchronization via HTTP/WebSocket to eliminate host clock drift | Planned |
-| **Web Audio Lookahead Engine** | Continuous lookahead audio scheduling to prevent background tab throttling | Planned |
-| **Progressive Web App (PWA)** | Offline support and service worker caching for field use | Planned |
-| **Modern UI & i18n** | Multi-language interface (English, Malay, Japanese) with Dark mode support | Planned |
+| Area | Feature | Implementation Details | Status |
+|---|---|---|:---:|
+| **Standards** | **Multi-Standard Support** | JJY 40 kHz, JJY 60 kHz, WWVB 60 kHz, DCF77 77.5 kHz, MSF 60 kHz, BPC 68.5 kHz | **Implemented** |
+| **Clock Source** | **Web NTP Sync** | Atomic internet time synchronization with RTT latency compensation and drift calculation | **Implemented** |
+| **Clock Source** | **Custom Override** | Manual date/time and timezone selector for arbitrary test signals | **Implemented** |
+| **RF Induction** | **Anti-Phase Stereo Drive** | $180^\circ$ phase-inverted Right channel doubling peak-to-peak coil voltage ($+6\text{ dB}$) | **Implemented** |
+| **RF Induction** | **WaveShaper Overdrive** | Sharp non-linear sigmoid clipping generating rich odd harmonics ($3f, 5f, \dots$) | **Implemented** |
+| **Audio Timing** | **Lookahead Scheduler** | Background Web Worker heartbeat driving sample-accurate Web Audio lookahead | **Implemented** |
+| **Platform** | **PWA & Offline** | Service Worker asset caching for field use with zero internet dependency | **Implemented** |
+| **UI / UX** | **i18n Multi-Language** | Full native support for English, Bahasa Melayu (proper Malay), and 日本語 (Japanese) | **Implemented** |
+| **UI / UX** | **Dark / Light Theme** | High-contrast visualizer with real-time frame inspector and oscilloscope | **Implemented** |
+| **Testing** | **Automated Test Suite** | 11 unit tests covering all protocols, BCD algorithms, and parity calculations | **Implemented** |
 
 ---
 

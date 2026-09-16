@@ -1,0 +1,22 @@
+{
+  "name": "9m2pju-web-time-signal",
+  "version": "2.0.0",
+  "description": "Browser-based LF Radio Time Signal Transmitter for Radio Clocks",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run-node-tests.js"
+  },
+  "keywords": [
+    "jjy",
+    "wwvb",
+    "dcf77",
+    "msf",
+    "bpc",
+    "radio-clock",
+    "time-signal",
+    "web-audio",
+    "ntp"
+  ],
+  "author": "9M2PJU <9m2pju@gmail.com>",
+  "license": "MIT"
+}
