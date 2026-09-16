@@ -224,6 +224,28 @@ stateDiagram-v2
 
 ---
 
+## Supported Timepieces & Compatibility Guide
+
+This web tool works with any quartz timepiece equipped with an internal LF radio receiver and ferrite antenna tuned to one of the supported broadcast frequencies:
+
+| Brand / Manufacturer | Supported Lines & Models | Recommended Protocol in App |
+|---|---|---|
+| **Casio** | **G-Shock Multi-Band 6 / 5**, **Wave Ceptor**, **Oceanus**, **Pro Trek**, **Edifice**, **Lineage** | `JJY40` / `JJY60` / `WWVB` / `DCF77` / `MSF` / `BPC` |
+| **Citizen** | **Eco-Drive Radio-Controlled**, **Attesa**, **Promaster**, **Exceed**, **Perfex Multi 3000** (Cal. H800, H804, E660, H145, etc.) | `JJY40` / `JJY60` (Japan models), `WWVB` / `DCF77` (Global models) |
+| **Seiko** | **Radio Wave Control (電波修正クロック)**, **Brightz**, **Dolce & Exceline**, **Spirit Smart**, Seiko Wall & Desk Clocks | `JJY40` / `JJY60` (Japan), `WWVB` (USA), `DCF77` (EU) |
+| **Junghans** | **Max Bill Mega**, **Meister Mega**, **Radio-Controlled** series | `DCF77` (Europe) / `JJY40` / `WWVB` |
+| **Braun / TFA / Oregon** | **Braun Digital/Analogue Radio Clocks**, **TFA Dostmann**, **Oregon Scientific**, **AcuRite**, **La Crosse Technology** | `DCF77` (Europe) / `WWVB` (North America) / `MSF` (UK) |
+| **Rhythm / Mag / Maruman** | **Rhythm Wall & Table Clocks (電波掛時計 / 電波目覚まし時計)**, **MAG**, **Maruman** | `JJY40` / `JJY60` |
+
+### Incompatible Technologies
+> [!NOTE]
+> The following types of watches do **NOT** use longwave terrestrial radio signals and cannot be synchronized using this tool:
+> * **GPS Satellite Watches**: Citizen *Satellite Wave* (F150/F900/F950), Seiko *Astron GPS Solar* (synchronize via satellite signals at 1.575 GHz, not longwave RF).
+> * **Bluetooth-Only Watches**: Watches that synchronize strictly through smartphone Bluetooth companion apps without internal RF radio receivers.
+> * **Standard Quartz & Mechanical Watches**: Timepieces without built-in radio reception circuitry.
+
+---
+
 ## Codebase Architecture
 
 The project is structured into clean, modular ES6 components:

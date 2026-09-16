@@ -41,6 +41,12 @@ export const translations = {
         safetyText: "DO NOT PUT EARPHONES IN OR NEAR YOUR EARS. This software emits high-amplitude high-frequency square waves (12–20 kHz) at 100% volume. Place earphones directly on or around the clock body only.",
         theoryTitle: "Operating Theory",
         theoryText: "Consumer audio sound cards cannot output 40–77.5 kHz directly due to the 20 kHz DAC ceiling. This tool generates high-amplitude square waves whose strong 3rd or 5th odd harmonics (e.g. 13.333 kHz × 3 = 40.0 kHz, 15.5 kHz × 5 = 77.5 kHz) radiate electromagnetic signals picked up by the timepiece's internal ferrite coil.",
+        compatTitle: "Supported Clocks & Watch Models",
+        compatCasio: "Casio: G-Shock Multi-Band 6 / Multi-Band 5, Wave Ceptor, Pro Trek, Edifice, Oceanus, Lineage.",
+        compatCitizen: "Citizen: Eco-Drive Radio-Controlled, Attesa, Promaster, Exceed, Perfex Multi 3000.",
+        compatSeiko: "Seiko: Radio Wave Control, Brightz, Dolce & Exceline, Spirit Smart, and Seiko Wall/Desk Clocks.",
+        compatOther: "Other Brands: Junghans Mega, Braun, Rhythm, La Crosse Technology, AcuRite, Oregon Scientific, TFA Dostmann.",
+        compatNotSupported: "Not Supported: GPS-only watches (Citizen Satellite Wave, Seiko GPS Astron in satellite mode), Bluetooth-only watches without radio receivers, and standard mechanical/quartz watches.",
         footer: "Open-source project maintained by 9M2PJU. Based on original concept by shogo82148."
     },
     ms: {
@@ -80,6 +86,12 @@ export const translations = {
         safetyText: "JANGAN MASUKKAN FON TELINGA KE DALAM TELINGA ANDA. Aplikasi ini memancarkan gelombang segi empat berfrekuensi tinggi (12–20 kHz) pada kelantangan 100%. Letakkan fon telinga hanya pada badan jam.",
         theoryTitle: "Prinsip Operasi",
         theoryText: "Kad bunyi audio biasa tidak dapat mengeluarkan frekuensi 40–77.5 kHz secara terus kerana had DAC 20 kHz. Aplikasi ini menjana gelombang segi empat yang menghasilkan harmonik ganjil ke-3 atau ke-5 (cth. 13.333 kHz × 3 = 40.0 kHz, 15.5 kHz × 5 = 77.5 kHz) untuk memancarkan isyarat elektromagnet ke antena ferit jam.",
+        compatTitle: "Model Jam Tangan & Jam Dinding yang Disokong",
+        compatCasio: "Casio: G-Shock Multi-Band 6 / Multi-Band 5, Wave Ceptor, Pro Trek, Edifice, Oceanus, Lineage.",
+        compatCitizen: "Citizen: Eco-Drive Radio-Controlled, Attesa, Promaster, Exceed, Perfex Multi 3000.",
+        compatSeiko: "Seiko: Radio Wave Control, Brightz, Dolce & Exceline, Spirit Smart, serta jam dinding/meja Seiko.",
+        compatOther: "Jenama Lain: Junghans Mega, Braun, Rhythm, La Crosse Technology, AcuRite, Oregon Scientific, TFA Dostmann.",
+        compatNotSupported: "Tidak Disokong: Jam satelit GPS sahaja (Citizen Satellite Wave, Seiko GPS Astron dalam mod satelit), jam Bluetooth sahaja tanpa penerima radio, dan jam mekanikal/kuarza biasa.",
         footer: "Projek sumber terbuka diselenggara oleh 9M2PJU. Berdasarkan konsep asal oleh shogo82148."
     },
     ja: {
@@ -119,6 +131,12 @@ export const translations = {
         safetyText: "イヤホンを絶対に耳に装着しないでください。本ソフトウェアは最大音量で12〜20 kHzの高周波矩形波を出力します。イヤホンは必ず時計の周囲にのみ配置してください。",
         theoryTitle: "動作原理",
         theoryText: "一般的な音声回路は20 kHz以上の再生に対応していませんが、13.333 kHzの矩形波を最大音量で出力することで生じる第3高調波（約40 kHz）を利用し、イヤホンから微弱な電波を放射して電波時計に受信させます。",
+        compatTitle: "対応する時計・電波時計モデル",
+        compatCasio: "カシオ (Casio): G-Shock Multi-Band 6 / Multi-Band 5, Wave Ceptor, Pro Trek, Edifice, Oceanus, Lineage など。",
+        compatCitizen: "シチズン (Citizen): エコ・ドライブ電波時計, アテッサ (Attesa), プロマスター (Promaster), エクシード (Exceed), Perfex Multi 3000 など。",
+        compatSeiko: "セイコー (Seiko): 電波修正クロック (Radio Wave Control), ブライツ (Brightz), ドルチェ＆エクセリーヌ, スピリット, セイコー置時計・掛時計など。",
+        compatOther: "その他のメーカー: ユンハンス (Junghans Mega), ブラウン (Braun), リズム時計 (Rhythm), La Crosse Technology, AcuRite, Oregon Scientific, TFA Dostmann など。",
+        compatNotSupported: "非対応の時計: GPS専用衛星時計（Citizen Satellite Wave, Seiko GPS AstronのGPS衛星モード）、電波受信アンテナ非搭載のBluetooth専用時計、通常の機械式・クォーツ時計。",
         footer: "9M2PJU によりメンテナンスされているオープンソースプロジェクトです。原作者 shogo82148 の成果に基づいています。"
     }
 };
