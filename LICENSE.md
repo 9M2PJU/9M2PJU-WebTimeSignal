@@ -1,6 +1,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2016 Ichinose Shogo
+Copyright (c) 2026 9M2PJU
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
