@@ -47,7 +47,19 @@ export const translations = {
         compatSeiko: "Seiko: Radio Wave Control, Brightz, Dolce & Exceline, Spirit Smart, and Seiko Wall/Desk Clocks.",
         compatOther: "Other Brands: Junghans Mega, Braun, Rhythm, La Crosse Technology, AcuRite, Oregon Scientific, TFA Dostmann.",
         compatNotSupported: "Not Supported: GPS-only watches (Citizen Satellite Wave, Seiko GPS Astron in satellite mode), Bluetooth-only watches without radio receivers, and standard mechanical/quartz watches.",
-        footer: "Open-source project maintained by 9M2PJU. Based on original concept by shogo82148."
+        footer: "Open-source project maintained by 9M2PJU. Based on original concept by shogo82148.",
+        installApp: "Install App",
+        installTitle: "Install WebTimeSignal PWA",
+        installDesc: "Install as a standalone app on your device for fast offline access, home screen launch, and full-screen experience.",
+        installBtn: "Install App",
+        installLater: "Dismiss",
+        installedNotice: "WebTimeSignal is installed and ready for offline use",
+        iosInstallTitle: "Install on iOS (iPhone / iPad)",
+        iosInstallStep1: "1. Tap the Share button ⎋ at the bottom toolbar of Safari.",
+        iosInstallStep2: "2. Scroll down and select 'Add to Home Screen' ➕.",
+        iosInstallStep3: "3. Tap 'Add' in the top-right corner to install.",
+        wakeLockActive: "Screen kept awake during transmission",
+        tapCellHint: "Click or tap any second to inspect frame details"
     },
     ms: {
         title: "9M2PJU WebTimeSignal",
@@ -92,7 +104,19 @@ export const translations = {
         compatSeiko: "Seiko: Radio Wave Control, Brightz, Dolce & Exceline, Spirit Smart, serta jam dinding/meja Seiko.",
         compatOther: "Jenama Lain: Junghans Mega, Braun, Rhythm, La Crosse Technology, AcuRite, Oregon Scientific, TFA Dostmann.",
         compatNotSupported: "Tidak Disokong: Jam satelit GPS sahaja (Citizen Satellite Wave, Seiko GPS Astron dalam mod satelit), jam Bluetooth sahaja tanpa penerima radio, dan jam mekanikal/kuarza biasa.",
-        footer: "Projek sumber terbuka diselenggara oleh 9M2PJU. Berdasarkan konsep asal oleh shogo82148."
+        footer: "Projek sumber terbuka diselenggara oleh 9M2PJU. Berdasarkan konsep asal oleh shogo82148.",
+        installApp: "Pasang Aplikasi",
+        installTitle: "Pasang WebTimeSignal PWA",
+        installDesc: "Pasang sebagai aplikasi kendiri pada peranti anda untuk akses luar talian yang pantas, pelancaran dari skrin utama, dan paparan skrin penuh.",
+        installBtn: "Pasang Aplikasi",
+        installLater: "Tutup",
+        installedNotice: "WebTimeSignal telah dipasang dan sedia digunakan secara luar talian",
+        iosInstallTitle: "Cara Pasang pada iOS (iPhone / iPad)",
+        iosInstallStep1: "1. Ketik butang Kongsi ⎋ pada bar alat bawah Safari.",
+        iosInstallStep2: "2. Tatal ke bawah dan pilih 'Tambah ke Skrin Utama' ➕.",
+        iosInstallStep3: "3. Ketik 'Tambah' di sudut kanan atas untuk memasang.",
+        wakeLockActive: "Skrin dikekalkan aktif semasa pemancaran",
+        tapCellHint: "Klik atau ketik mana-mana saat untuk memeriksa butiran bingkai"
     },
     ja: {
         title: "9M2PJU WebTimeSignal",
@@ -137,7 +161,19 @@ export const translations = {
         compatSeiko: "セイコー (Seiko): 電波修正クロック (Radio Wave Control), ブライツ (Brightz), ドルチェ＆エクセリーヌ, スピリット, セイコー置時計・掛時計など。",
         compatOther: "その他のメーカー: ユンハンス (Junghans Mega), ブラウン (Braun), リズム時計 (Rhythm), La Crosse Technology, AcuRite, Oregon Scientific, TFA Dostmann など。",
         compatNotSupported: "非対応の時計: GPS専用衛星時計（Citizen Satellite Wave, Seiko GPS AstronのGPS衛星モード）、電波受信アンテナ非搭載のBluetooth専用時計、通常の機械式・クォーツ時計。",
-        footer: "9M2PJU によりメンテナンスされているオープンソースプロジェクトです。原作者 shogo82148 の成果に基づいています。"
+        footer: "9M2PJU によりメンテナンスされているオープンソースプロジェクトです。原作者 shogo82148 の成果に基づいています。",
+        installApp: "アプリをインストール",
+        installTitle: "WebTimeSignal PWAをインストール",
+        installDesc: "ホーム画面に追加すると、オフライン環境でも素早く起動でき、全画面で快適にご利用いただけます。",
+        installBtn: "インストール",
+        installLater: "閉じる",
+        installedNotice: "WebTimeSignalがインストールされ、オフライン利用が可能になりました",
+        iosInstallTitle: "iOS（iPhone / iPad）でのインストール手順",
+        iosInstallStep1: "1. Safari下部ツールバーの「共有」ボタン ⎋ をタップします。",
+        iosInstallStep2: "2. メニューを下にスクロールし、「ホーム画面に追加」➕ を選択します。",
+        iosInstallStep3: "3. 右上の「追加」をタップしてインストール完了です。",
+        wakeLockActive: "送信中：画面のスリープを防止しています",
+        tapCellHint: "各秒のセルをクリック／タップすると詳細を確認できます"
     }
 };
 
@@ -179,6 +215,11 @@ export class I18n {
         document.querySelectorAll('[data-i18n-title]').forEach(el => {
             const key = el.getAttribute('data-i18n-title');
             el.title = this.t(key);
+        });
+
+        document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+            const key = el.getAttribute('data-i18n-aria');
+            el.setAttribute('aria-label', this.t(key));
         });
 
         document.documentElement.lang = this.currentLang;

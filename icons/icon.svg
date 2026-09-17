@@ -1,27 +1,128 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0d1117" />
-      <stop offset="100%" stop-color="#161b22" />
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e14" />
+      <stop offset="50%" stop-color="#121820" />
+      <stop offset="100%" stop-color="#161d27" />
     </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2ea043" />
+
+    <!-- Outer Border Metallic Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.8" />
+      <stop offset="40%" stop-color="#30363d" />
+      <stop offset="70%" stop-color="#238636" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#2ea043" />
+    </linearGradient>
+
+    <!-- Emerald Glow Gradient -->
+    <linearGradient id="accentEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3fb950" />
       <stop offset="100%" stop-color="#238636" />
     </linearGradient>
+
+    <!-- Cyan RF Wave Gradient -->
+    <linearGradient id="rfCyan" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#1f6feb" stop-opacity="0.2" />
+      <stop offset="50%" stop-color="#58a6ff" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#79c0ff" />
+    </linearGradient>
+
+    <!-- Dial Ring Gradient -->
+    <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f242c" />
+      <stop offset="100%" stop-color="#0d1117" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
   </defs>
-  <!-- Background Rounded Rect -->
-  <rect width="512" height="512" rx="100" fill="url(#bg)" stroke="#30363d" stroke-width="12"/>
-  
-  <!-- Outer Radio Wave Arcs -->
-  <path d="M 120 180 A 180 180 0 0 1 392 180" fill="none" stroke="#58a6ff" stroke-width="24" stroke-linecap="round" opacity="0.4"/>
-  <path d="M 160 220 A 130 130 0 0 1 352 220" fill="none" stroke="#58a6ff" stroke-width="24" stroke-linecap="round" opacity="0.7"/>
-  <path d="M 200 260 A 80 80 0 0 1 312 260" fill="none" stroke="#58a6ff" stroke-width="24" stroke-linecap="round"/>
 
-  <!-- Antenna Tower / Emitter Center -->
-  <circle cx="256" cy="300" r="28" fill="url(#accent)"/>
-  <polygon points="256,310 216,420 296,420" fill="none" stroke="#f0f6fc" stroke-width="16" stroke-linejoin="round"/>
-  <line x1="230" y1="370" x2="282" y2="370" stroke="#f0f6fc" stroke-width="14"/>
+  <!-- Base Badge Squircle (App Icon Profile) -->
+  <rect x="8" y="8" width="496" height="496" rx="112" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="10" />
 
-  <!-- Clock Hands Motif -->
-  <circle cx="256" cy="300" r="6" fill="#ffffff"/>
+  <!-- Dial Outer Subtle Ring -->
+  <circle cx="256" cy="256" r="216" fill="none" stroke="#21262d" stroke-width="3" />
+  <circle cx="256" cy="256" r="204" fill="url(#dialGrad)" stroke="#30363d" stroke-width="2" />
+
+  <!-- Chronometer Dial Ticks (12 Major Hour Markers) -->
+  <g stroke="#8b949e" stroke-width="4" stroke-linecap="round" opacity="0.6">
+    <line x1="256" y1="62" x2="256" y2="76" stroke="#58a6ff" stroke-width="6" />
+    <line x1="393" y1="119" x2="383" y2="129" />
+    <line x1="450" y1="256" x2="436" y2="256" stroke="#2ea043" stroke-width="6" />
+    <line x1="393" y1="393" x2="383" y2="383" />
+    <line x1="256" y1="450" x2="256" y2="436" stroke="#58a6ff" stroke-width="6" />
+    <line x1="119" y1="393" x2="129" y2="383" />
+    <line x1="62" y1="256" x2="76" y2="256" stroke="#2ea043" stroke-width="6" />
+    <line x1="119" y1="119" x2="129" y2="129" />
+  </g>
+
+  <!-- Minor Minute Pip Dots -->
+  <g fill="#484f58">
+    <circle cx="353" cy="88" r="3" />
+    <circle cx="424" cy="159" r="3" />
+    <circle cx="424" cy="353" r="3" />
+    <circle cx="353" cy="424" r="3" />
+    <circle cx="159" cy="424" r="3" />
+    <circle cx="88" cy="353" r="3" />
+    <circle cx="88" cy="159" r="3" />
+    <circle cx="159" cy="88" r="3" />
+  </g>
+
+  <!-- Concentric RF Time Signal Radio Waves (Broadcasting from Mast Beacon) -->
+  <g fill="none" stroke-linecap="round" filter="url(#glow)">
+    <!-- Wave 3 (Outer) -->
+    <path d="M 106 186 A 170 170 0 0 1 406 186" stroke="url(#rfCyan)" stroke-width="14" opacity="0.45" />
+    <!-- Wave 2 (Mid) -->
+    <path d="M 148 214 A 122 122 0 0 1 364 214" stroke="url(#rfCyan)" stroke-width="16" opacity="0.75" />
+    <!-- Wave 1 (Inner) -->
+    <path d="M 188 242 A 76 76 0 0 1 324 242" stroke="url(#rfCyan)" stroke-width="18" opacity="0.95" />
+  </g>
+
+  <!-- Atomic Time Pulsing Ambient Beacon Glow behind Tower -->
+  <circle cx="256" cy="270" r="44" fill="#238636" opacity="0.25" filter="url(#softGlow)" />
+
+  <!-- Radio Transmission Tower Lattice (LF Antenna Mast) -->
+  <g stroke="#e6edf3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Main Tower Legs -->
+    <polyline points="214,410 256,270 298,410" fill="none" stroke="#f0f6fc" stroke-width="15" />
+    <!-- Cross Bracing & Horizontal Ties -->
+    <line x1="228" y1="365" x2="284" y2="365" stroke="#f0f6fc" stroke-width="12" />
+    <line x1="240" y1="325" x2="272" y2="325" stroke="#f0f6fc" stroke-width="10" />
+    <line x1="228" y1="365" x2="272" y2="325" stroke="#8b949e" stroke-width="6" opacity="0.7" />
+    <line x1="284" y1="365" x2="240" y2="325" stroke="#8b949e" stroke-width="6" opacity="0.7" />
+    <!-- Mast Foundation Base Footers -->
+    <line x1="202" y1="412" x2="226" y2="412" stroke="#58a6ff" stroke-width="10" />
+    <line x1="286" y1="412" x2="310" y2="412" stroke="#58a6ff" stroke-width="10" />
+  </g>
+
+  <!-- Precision Clock Hands (10:10 Chronometer Pose) radiating from Center Beacon -->
+  <!-- Hour Hand (Pointing to ~10 o'clock: 300 deg) -->
+  <line x1="256" y1="270" x2="186" y2="210" stroke="#f0f6fc" stroke-width="14" stroke-linecap="round" />
+  <line x1="256" y1="270" x2="186" y2="210" stroke="#58a6ff" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Minute Hand (Pointing to ~2 o'clock: 58 deg) -->
+  <line x1="256" y1="270" x2="340" y2="185" stroke="#f0f6fc" stroke-width="12" stroke-linecap="round" />
+  <line x1="256" y1="270" x2="340" y2="185" stroke="#3fb950" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Central Time Signal Emitter Beacon (Hub Sphere) -->
+  <circle cx="256" cy="270" r="24" fill="url(#accentEmerald)" stroke="#ffffff" stroke-width="4" filter="url(#glow)" />
+  <circle cx="256" cy="270" r="9" fill="#ffffff" />
+
+  <!-- Harmonic Timecode Square Pulse Graphic Motif across Lower Area -->
+  <path d="M 140 435 L 175 435 L 175 423 L 205 423 L 205 435 L 307 435 L 307 423 L 337 423 L 337 435 L 372 435" 
+        fill="none" stroke="#58a6ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8" />
+
+  <!-- Official Callsign Insignia Tag -->
+  <g transform="translate(256, 460)">
+    <rect x="-65" y="-13" width="130" height="24" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1.5" />
+    <text x="0" y="4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#58a6ff" letter-spacing="1.5" text-anchor="middle">9M2PJU</text>
+  </g>
 </svg>

@@ -1,12 +1,44 @@
 {
-  "name": "9M2PJU WebTimeSignal",
+  "id": "./",
+  "name": "9M2PJU WebTimeSignal - Radio Time Signal Transmitter",
   "short_name": "WebTimeSignal",
-  "description": "Browser-based LF Radio Time Signal Transmitter for Radio Clocks",
+  "description": "Browser-based LF Radio Time Signal Transmitter & Clock Synchronizer for JJY, WWVB, DCF77, MSF, and BPC radio-controlled clocks & watches.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "window-controls-overlay", "minimal-ui"],
+  "orientation": "any",
   "background_color": "#0d1117",
   "theme_color": "#238636",
+  "categories": ["utilities", "productivity", "tools"],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "./icons/icon.svg",
       "sizes": "any",

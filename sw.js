@@ -2,7 +2,7 @@
  * 9M2PJU WebTimeSignal - Service Worker for Offline PWA Support
  */
 
-const CACHE_NAME = 'web-time-signal-v2';
+const CACHE_NAME = 'web-time-signal-v2.1';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -19,7 +19,16 @@ const ASSETS_TO_CACHE = [
     './js/encoders/msf.js',
     './js/encoders/bpc.js',
     './manifest.webmanifest',
-    './icons/icon.svg'
+    './icons/icon.svg',
+    './icons/icon-maskable.svg',
+    './icons/icon-192.png',
+    './icons/icon-512.png',
+    './icons/icon-maskable-192.png',
+    './icons/icon-maskable-512.png',
+    './icons/apple-touch-icon.png',
+    './icons/favicon.ico',
+    './icons/favicon-32x32.png',
+    './icons/favicon-16x16.png'
 ];
 
 self.addEventListener('install', (e) => {
@@ -42,7 +51,7 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
     // For NTP trace/API requests, bypass cache
-    if (e.request.url.includes('trace') || e.request.url.includes('worldtimeapi')) {
+    if (e.request.url.includes('trace') || e.request.url.includes('worldtimeapi') || e.request.url.includes('/api/time')) {
         return;
     }
 

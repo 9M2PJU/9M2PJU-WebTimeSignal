@@ -1,13 +1,13 @@
 # 9M2PJU WebTimeSignal
 
 [![Live Production](https://img.shields.io/badge/Production-time.hamradio.my-238636?style=flat&logo=cloudflare)](https://time.hamradio.my)
-[![Test Suite](https://img.shields.io/badge/Unit%20Tests-11%20Passing-brightgreen?style=flat&logo=node.js)](https://time.hamradio.my/tests/)
+[![Test Suite](https://img.shields.io/badge/Unit%20Tests-12%20Passing-brightgreen?style=flat&logo=node.js)](https://time.hamradio.my/tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![PWA Ready](https://img.shields.io/badge/PWA-Offline%20Ready-orange?style=flat&logo=pwa)](manifest.webmanifest)
 
 > **Universal Browser-Based Low Frequency (LF) Radio Time Signal Transmitter & Clock Synchronizer**
 >
-> Emulates **JJY (40 kHz / 60 kHz)**, **WWVB (60 kHz)**, **DCF77 (77.5 kHz)**, **MSF (60 kHz)**, and **BPC (68.5 kHz)** standard time broadcasts using consumer earphone coils and Web Audio harmonic modulation.
+> Emulates **JJY (40 kHz / 60 kHz)**, **WWVB (60 kHz)**, **DCF77 (77.5 kHz)**, **MSF (60 kHz)**, and **BPC (68.5 kHz)** standard time broadcasts using consumer earphone coils and Web Audio harmonic modulation. Features responsive desktop/mobile interface, PWA installation with offline caching, and Screen Wake Lock during transmission.
 
 ---
 

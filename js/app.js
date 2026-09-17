@@ -30,10 +30,14 @@ class App {
         this.currentEncoder = this.encoders['JJY40'];
         this.currentFrame = null;
         this.isTransmitting = false;
+        this.wakeLockSentinel = null;
+        this.deferredInstallPrompt = null;
+        this.inspectedSecond = null;
 
         this.dom = {};
         this._bindDOM();
         this._bindEvents();
+        this._initPWA();
         this._initInspectorGrid();
         this._initClockLoop();
         this._initVisualizer();
@@ -47,6 +51,14 @@ class App {
         this.dom = {
             langSelect: document.getElementById('lang-select'),
             themeToggle: document.getElementById('theme-toggle'),
+            btnPwaInstall: document.getElementById('btn-pwa-install'),
+            pwaBanner: document.getElementById('pwa-install-banner'),
+            btnBannerInstall: document.getElementById('btn-banner-install'),
+            btnBannerDismiss: document.getElementById('btn-banner-dismiss'),
+            iosModal: document.getElementById('ios-install-modal'),
+            btnCloseIosModal: document.getElementById('btn-close-ios-modal'),
+            btnDoneIosModal: document.getElementById('btn-done-ios-modal'),
+            wakeLockBadge: document.getElementById('wake-lock-badge'),
             protocolSelect: document.getElementById('protocol-select'),
             ntpSyncBtn: document.getElementById('btn-ntp-sync'),
             ntpDot: document.getElementById('ntp-status-dot'),
@@ -81,6 +93,7 @@ class App {
         this.dom.langSelect.addEventListener('change', (e) => {
             this.i18n.setLanguage(e.target.value);
             this._updateClockDisplay();
+            this._renderStaticFrame();
         });
 
         // Theme Switcher
@@ -89,7 +102,15 @@ class App {
             const next = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             this.dom.themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('web_time_signal_theme', next);
         });
+
+        // Load saved theme if any
+        const savedTheme = localStorage.getItem('web_time_signal_theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            this.dom.themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        }
 
         // Protocol Selection
         this.dom.protocolSelect.addEventListener('change', (e) => {
@@ -170,6 +191,13 @@ class App {
             this.dom.customTimeGroup.style.display = e.target.checked ? 'block' : 'none';
         });
 
+        // Visibility change for Screen Wake Lock
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && this.isTransmitting) {
+                await this._requestWakeLock();
+            }
+        });
+
         // Audio Engine callbacks
         this.audio.onSecondChange = (sec, symbolInfo, frame) => {
             this.currentFrame = frame;
@@ -178,9 +206,139 @@ class App {
 
         this.audio.onStatusChange = (running) => {
             this.isTransmitting = running;
-            this.dom.btnStartStop.className = running ? 'btn btn-danger' : 'btn btn-primary';
-            this.dom.btnStartStop.textContent = running ? this.i18n.t('stop') : this.i18n.t('start');
+            this.dom.btnStartStop.className = running ? 'btn btn-danger btn-action' : 'btn btn-primary btn-action';
+            const labelSpan = this.dom.btnStartStop.querySelector('span:not(.btn-indicator)');
+            if (labelSpan) {
+                labelSpan.textContent = running ? this.i18n.t('stop') : this.i18n.t('start');
+            } else {
+                this.dom.btnStartStop.textContent = running ? this.i18n.t('stop') : this.i18n.t('start');
+            }
         };
+    }
+
+    _initPWA() {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        if (isStandalone) {
+            // Already running as standalone PWA
+            if (this.dom.btnPwaInstall) this.dom.btnPwaInstall.classList.add('hidden');
+            if (this.dom.pwaBanner) this.dom.pwaBanner.classList.add('hidden');
+            return;
+        }
+
+        // Handle beforeinstallprompt (Chrome / Android / Edge / Desktop)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            this.deferredInstallPrompt = e;
+
+            if (this.dom.btnPwaInstall) {
+                this.dom.btnPwaInstall.classList.remove('hidden');
+            }
+
+            const dismissed = sessionStorage.getItem('web_time_signal_pwa_dismissed');
+            if (!dismissed && this.dom.pwaBanner) {
+                this.dom.pwaBanner.classList.remove('hidden');
+            }
+        });
+
+        // Handle iOS install presentation
+        if (isIOS && !isStandalone) {
+            if (this.dom.btnPwaInstall) {
+                this.dom.btnPwaInstall.classList.remove('hidden');
+            }
+        }
+
+        // Install button click triggers
+        const triggerInstall = async () => {
+            if (isIOS) {
+                if (this.dom.iosModal) this.dom.iosModal.classList.remove('hidden');
+                return;
+            }
+
+            if (!this.deferredInstallPrompt) {
+                // Fallback guide if prompt not available
+                alert(this.i18n.t('installDesc'));
+                return;
+            }
+
+            this.deferredInstallPrompt.prompt();
+            const choiceResult = await this.deferredInstallPrompt.userChoice;
+            if (choiceResult.outcome === 'accepted') {
+                if (this.dom.btnPwaInstall) this.dom.btnPwaInstall.classList.add('hidden');
+                if (this.dom.pwaBanner) this.dom.pwaBanner.classList.add('hidden');
+            }
+            this.deferredInstallPrompt = null;
+        };
+
+        if (this.dom.btnPwaInstall) {
+            this.dom.btnPwaInstall.addEventListener('click', triggerInstall);
+        }
+
+        if (this.dom.btnBannerInstall) {
+            this.dom.btnBannerInstall.addEventListener('click', triggerInstall);
+        }
+
+        if (this.dom.btnBannerDismiss) {
+            this.dom.btnBannerDismiss.addEventListener('click', () => {
+                if (this.dom.pwaBanner) this.dom.pwaBanner.classList.add('hidden');
+                sessionStorage.setItem('web_time_signal_pwa_dismissed', '1');
+            });
+        }
+
+        // iOS modal dismissal
+        const closeIosModal = () => {
+            if (this.dom.iosModal) this.dom.iosModal.classList.add('hidden');
+        };
+
+        if (this.dom.btnCloseIosModal) {
+            this.dom.btnCloseIosModal.addEventListener('click', closeIosModal);
+        }
+        if (this.dom.btnDoneIosModal) {
+            this.dom.btnDoneIosModal.addEventListener('click', closeIosModal);
+        }
+        if (this.dom.iosModal) {
+            this.dom.iosModal.addEventListener('click', (e) => {
+                if (e.target === this.dom.iosModal) closeIosModal();
+            });
+        }
+
+        // When successfully installed
+        window.addEventListener('appinstalled', () => {
+            if (this.dom.btnPwaInstall) this.dom.btnPwaInstall.classList.add('hidden');
+            if (this.dom.pwaBanner) this.dom.pwaBanner.classList.add('hidden');
+            this.deferredInstallPrompt = null;
+            console.log('9M2PJU WebTimeSignal PWA was successfully installed.');
+        });
+    }
+
+    async _requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try {
+                this.wakeLockSentinel = await navigator.wakeLock.request('screen');
+                if (this.dom.wakeLockBadge) this.dom.wakeLockBadge.classList.remove('hidden');
+                this.wakeLockSentinel.addEventListener('release', () => {
+                    if (!this.isTransmitting && this.dom.wakeLockBadge) {
+                        this.dom.wakeLockBadge.classList.add('hidden');
+                    }
+                });
+            } catch (err) {
+                console.warn('Wake Lock request failed:', err);
+                if (this.dom.wakeLockBadge) this.dom.wakeLockBadge.classList.add('hidden');
+            }
+        }
+    }
+
+    async _releaseWakeLock() {
+        if (this.wakeLockSentinel) {
+            try {
+                await this.wakeLockSentinel.release();
+            } catch (e) {
+                // Ignore release errors
+            }
+            this.wakeLockSentinel = null;
+        }
+        if (this.dom.wakeLockBadge) this.dom.wakeLockBadge.classList.add('hidden');
     }
 
     _getOptions() {
@@ -197,11 +355,13 @@ class App {
         return this.ntp.getNow();
     }
 
-    _startTransmission() {
+    async _startTransmission() {
+        await this._requestWakeLock();
         this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
     }
 
-    _stopTransmission() {
+    async _stopTransmission() {
+        await this._releaseWakeLock();
         this.audio.stop();
         this._clearHighlight();
     }
@@ -213,9 +373,38 @@ class App {
             cell.className = 'cell';
             cell.id = `cell-${i}`;
             cell.textContent = i < 10 ? `0${i}` : `${i}`;
+            cell.setAttribute('tabindex', '0');
+            cell.setAttribute('role', 'button');
+            cell.setAttribute('aria-label', `Second ${i}`);
+
+            // Interactive inspection on click or Enter key
+            const inspect = () => this._inspectSpecificSecond(i);
+            cell.addEventListener('click', inspect);
+            cell.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    inspect();
+                }
+            });
+
             this.dom.inspectorGrid.appendChild(cell);
         }
         this._renderStaticFrame();
+    }
+
+    _inspectSpecificSecond(sec) {
+        document.querySelectorAll('.cell.inspected').forEach(el => el.classList.remove('inspected'));
+        const targetCell = document.getElementById(`cell-${sec}`);
+        if (targetCell) targetCell.classList.add('inspected');
+
+        const date = this._getCurrentTime();
+        const frame = this.currentFrame || this.currentEncoder.encodeFrame(date, this._getOptions());
+        const sym = frame[sec];
+        if (sym) {
+            this.dom.activeSecVal.textContent = sec < 10 ? `0${sec}` : `${sec}`;
+            this.dom.activeSymbolVal.textContent = `${sym.symbol} (${Math.round(sym.toneDuration * 1000)}ms)`;
+            this.dom.activeFieldVal.textContent = sym.label;
+        }
     }
 
     _renderStaticFrame() {
@@ -281,19 +470,46 @@ class App {
     _initVisualizer() {
         const canvas = this.dom.canvas;
         const ctx = canvas.getContext('2d');
+        const wrapper = canvas.parentElement;
+
+        // Resize canvas to match display resolution and pixel ratio
+        const resizeCanvas = () => {
+            if (!wrapper) return;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = wrapper.getBoundingClientRect();
+            const displayWidth = Math.floor(rect.width);
+            const displayHeight = Math.max(70, Math.floor(rect.height || (rect.width * 0.09)));
+
+            if (canvas.width !== displayWidth * dpr || canvas.height !== displayHeight * dpr) {
+                canvas.width = displayWidth * dpr;
+                canvas.height = displayHeight * dpr;
+            }
+        };
+
+        if (window.ResizeObserver) {
+            const ro = new ResizeObserver(() => resizeCanvas());
+            ro.observe(wrapper);
+        } else {
+            window.addEventListener('resize', resizeCanvas);
+        }
+        resizeCanvas();
 
         const draw = () => {
             requestAnimationFrame(draw);
+            const w = canvas.width;
+            const h = canvas.height;
+            const dpr = window.devicePixelRatio || 1;
+
             ctx.fillStyle = '#05070a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, w, h);
 
             if (!this.audio.analyser || !this.isTransmitting) {
                 // Idle baseline
                 ctx.strokeStyle = '#21262d';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2 * dpr;
                 ctx.beginPath();
-                ctx.moveTo(0, canvas.height / 2);
-                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.moveTo(0, h / 2);
+                ctx.lineTo(w, h / 2);
                 ctx.stroke();
                 return;
             }
@@ -302,16 +518,16 @@ class App {
             const dataArray = new Uint8Array(bufferLength);
             this.audio.analyser.getByteTimeDomainData(dataArray);
 
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 2 * dpr;
             ctx.strokeStyle = '#58a6ff';
             ctx.beginPath();
 
-            const sliceWidth = canvas.width * 1.0 / bufferLength;
+            const sliceWidth = (w * 1.0) / bufferLength;
             let x = 0;
 
             for (let i = 0; i < bufferLength; i++) {
                 const v = dataArray[i] / 128.0;
-                const y = v * canvas.height / 2;
+                const y = (v * h) / 2;
 
                 if (i === 0) {
                     ctx.moveTo(x, y);
@@ -322,7 +538,7 @@ class App {
                 x += sliceWidth;
             }
 
-            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.lineTo(w, h / 2);
             ctx.stroke();
         };
 

@@ -2,13 +2,13 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>9M2PJU WebTimeSignal - Radio Time Signal Transmitter & Clock Synchronizer</title>
     
     <!-- Primary Meta Tags & SEO -->
     <meta name="title" content="9M2PJU WebTimeSignal - Radio Time Signal Transmitter & Clock Synchronizer">
     <meta name="description" content="Free browser-based LF radio time signal simulator & transmitter. Synchronize JJY (40/60 kHz), WWVB (60 kHz), DCF77 (77.5 kHz), MSF (60 kHz), and BPC (68.5 kHz) radio-controlled clocks, G-Shock Multi-Band, Wave Ceptor, and Citizen Eco-Drive watches indoors using standard earphones.">
-    <meta name="keywords" content="JJY, JJY emulator, WWVB, DCF77, MSF, BPC, radio controlled clock, 電波時計, Wave Ceptor, G-Shock sync, Citizen Eco-Drive, Multi-Band 6, amateur radio, 9M2PJU, ham radio, NTP time signal, Web Audio time transmitter">
+    <meta name="keywords" content="JJY, JJY emulator, WWVB, DCF77, MSF, BPC, radio controlled clock, 電波時計, Wave Ceptor, G-Shock sync, Citizen Eco-Drive, Multi-Band 6, amateur radio, 9M2PJU, ham radio, NTP time signal, Web Audio time transmitter, PWA time signal">
     <meta name="author" content="9M2PJU">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://time.hamradio.my/">
@@ -18,7 +18,7 @@
     <meta property="og:url" content="https://time.hamradio.my/">
     <meta property="og:title" content="9M2PJU WebTimeSignal - Radio Time Signal Transmitter & Clock Synchronizer">
     <meta property="og:description" content="Synchronize JJY, WWVB, DCF77, MSF, and BPC radio-controlled watches directly from your browser using earphone coils and Web Audio harmonics.">
-    <meta property="og:image" content="https://time.hamradio.my/icons/icon.svg">
+    <meta property="og:image" content="https://time.hamradio.my/icons/icon-512.png">
     <meta property="og:site_name" content="9M2PJU WebTimeSignal">
     <meta property="og:locale" content="en_US">
 
@@ -27,16 +27,25 @@
     <meta property="twitter:url" content="https://time.hamradio.my/">
     <meta property="twitter:title" content="9M2PJU WebTimeSignal - Radio Time Signal Transmitter & Clock Synchronizer">
     <meta property="twitter:description" content="Synchronize JJY, WWVB, DCF77, MSF, and BPC radio-controlled watches directly from your browser using earphone coils and Web Audio harmonics.">
-    <meta property="twitter:image" content="https://time.hamradio.my/icons/icon.svg">
+    <meta property="twitter:image" content="https://time.hamradio.my/icons/icon-512.png">
 
-    <!-- PWA & Mobile Icons -->
-    <link rel="manifest" href="manifest.webmanifest">
+    <!-- Favicons & App Icons -->
+    <link rel="icon" href="icons/favicon.ico" sizes="any">
     <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="icons/icon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+    <link rel="manifest" href="manifest.webmanifest">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="WebTimeSignal">
     <meta name="theme-color" content="#238636">
+    <meta name="color-scheme" content="dark light">
+
     <link rel="stylesheet" href="css/app.css">
 
     <!-- Structured Data / JSON-LD -->
@@ -67,39 +76,74 @@
         <!-- Header -->
         <header>
             <div class="header-brand">
-                <h1>
-                    <span data-i18n="title">9M2PJU WebTimeSignal</span>
-                    <span class="badge">v2.0</span>
-                </h1>
-                <p data-i18n="subtitle">Browser-based LF Radio Time Signal Transmitter & Clock Synchronizer</p>
+                <div class="header-logo-group">
+                    <img src="icons/icon.svg" alt="9M2PJU WebTimeSignal Logo" class="app-logo" width="38" height="38">
+                    <div>
+                        <h1>
+                            <span data-i18n="title">9M2PJU WebTimeSignal</span>
+                            <span class="badge">v2.1</span>
+                        </h1>
+                        <p data-i18n="subtitle">Browser-based LF Radio Time Signal Transmitter & Clock Synchronizer</p>
+                    </div>
+                </div>
             </div>
             <div class="header-controls">
-                <select id="lang-select" aria-label="Language selector">
-                    <option value="en">English (EN)</option>
-                    <option value="ms">Bahasa Melayu (MS)</option>
-                    <option value="ja">日本語 (JA)</option>
-                </select>
-                <button id="theme-toggle" class="btn btn-secondary btn-sm" aria-label="Toggle theme">☀️</button>
+                <button id="btn-pwa-install" class="btn btn-sm btn-install hidden" aria-label="Install App">
+                    <span class="btn-icon">📲</span>
+                    <span data-i18n="installApp">Install App</span>
+                </button>
+                <div class="header-select-wrapper">
+                    <select id="lang-select" aria-label="Language selector">
+                        <option value="en">English (EN)</option>
+                        <option value="ms">Bahasa Melayu (MS)</option>
+                        <option value="ja">日本語 (JA)</option>
+                    </select>
+                </div>
+                <button id="theme-toggle" class="btn btn-secondary btn-sm btn-icon-only" aria-label="Toggle theme">☀️</button>
             </div>
         </header>
+
+        <!-- PWA Install Card Banner (Collapsible/Dismissible) -->
+        <div id="pwa-install-banner" class="pwa-banner hidden">
+            <div class="pwa-banner-content">
+                <div class="pwa-banner-icon">⚡</div>
+                <div class="pwa-banner-text">
+                    <strong data-i18n="installTitle">Install WebTimeSignal PWA</strong>
+                    <span data-i18n="installDesc">Install as a standalone app on your device for fast offline access and full-screen experience.</span>
+                </div>
+            </div>
+            <div class="pwa-banner-actions">
+                <button id="btn-banner-install" class="btn btn-sm btn-primary" data-i18n="installBtn">Install App</button>
+                <button id="btn-banner-dismiss" class="btn btn-sm btn-secondary" data-i18n="installLater">Dismiss</button>
+            </div>
+        </div>
 
         <!-- Main Action & Clock Panel -->
         <section class="action-panel">
             <div class="clock-display-row">
-                <div>
+                <div class="clock-wrapper">
                     <div id="clock-display" class="digital-clock">00:00:00.0</div>
                     <div id="clock-tz-info" class="digital-clock-sub">Loading time...</div>
                 </div>
-                <div class="ntp-pill">
-                    <span id="ntp-status-dot" class="status-dot syncing"></span>
-                    <span id="ntp-status-text" data-i18n="ntpStatusSyncing">Synchronizing with atomic time servers...</span>
-                    <button id="btn-ntp-sync" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;" data-i18n="syncNtp">Sync NTP</button>
+                <div class="status-wrapper">
+                    <div class="ntp-pill">
+                        <span id="ntp-status-dot" class="status-dot syncing"></span>
+                        <span id="ntp-status-text" data-i18n="ntpStatusSyncing">Synchronizing with atomic time servers...</span>
+                        <button id="btn-ntp-sync" class="btn btn-secondary btn-xs" data-i18n="syncNtp">Sync NTP</button>
+                    </div>
+                    <div id="wake-lock-badge" class="wake-lock-pill hidden">
+                        <span class="wake-lock-dot"></span>
+                        <span data-i18n="wakeLockActive">Screen kept awake during transmission</span>
+                    </div>
                 </div>
             </div>
 
             <div class="main-buttons">
-                <button id="btn-start-stop" class="btn btn-primary" data-i18n="start">Start Transmission</button>
-                <button id="btn-test-tone" class="btn btn-secondary" data-i18n="testTone">Test 1s Carrier Tone</button>
+                <button id="btn-start-stop" class="btn btn-primary btn-action" data-i18n="start">
+                    <span class="btn-indicator"></span>
+                    <span>Start Transmission</span>
+                </button>
+                <button id="btn-test-tone" class="btn btn-secondary btn-action" data-i18n="testTone">Test 1s Carrier Tone</button>
             </div>
         </section>
 
@@ -136,7 +180,7 @@
                         <span data-i18n="customTimeToggle">Manual Time Override / Custom Timezone</span>
                     </label>
                     <div id="custom-time-group" style="display: none; margin-top: 0.5rem;">
-                        <input type="datetime-local" id="custom-time-input" style="padding: 0.4rem; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); width: 100%;">
+                        <input type="datetime-local" id="custom-time-input" class="form-input">
                     </div>
                 </div>
             </div>
@@ -148,14 +192,16 @@
                 </h3>
 
                 <div class="form-group">
-                    <label data-i18n="volume">Output Volume</label>
+                    <div class="slider-header">
+                        <label for="volume-slider" data-i18n="volume">Output Volume</label>
+                        <span id="volume-val" class="slider-value">100%</span>
+                    </div>
                     <div class="slider-container">
-                        <input type="range" id="volume-slider" min="0.0" max="1.0" step="0.05" value="1.0">
-                        <span id="volume-val" style="font-weight: bold; min-width: 40px;">100%</span>
+                        <input type="range" id="volume-slider" min="0.0" max="1.0" step="0.05" value="1.0" aria-label="Output Volume">
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" style="margin-top: 0.8rem;">
                     <label class="toggle-label">
                         <input type="checkbox" id="toggle-antiphase" checked>
                         <span data-i18n="stereoAntiPhase">Anti-Phase Differential Stereo Drive (2x Coil Voltage)</span>
@@ -178,15 +224,22 @@
         </section>
 
         <!-- Real-Time Signal Inspector & Visualizer -->
-        <section class="card">
-            <h3 class="card-title">
+        <section class="card visualizer-card">
+            <h3 class="card-title visualizer-title">
                 <span data-i18n="bitstreamTitle">60-Second Real-Time Frame Inspector</span>
-                <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary);"><span data-i18n="offset">Offset</span>: <span id="ntp-offset-val">0 ms</span> | <span data-i18n="rtt">RTT</span>: <span id="ntp-rtt-val">--</span> | <span>Jitter</span>: <span id="ntp-jitter-val">±0.0 ms</span> | <span>Atomic Node</span>: <span id="ntp-colo-val">EDGE</span></span>
+                <span class="telemetry-info">
+                    <span data-i18n="offset">Offset</span>: <span id="ntp-offset-val">0 ms</span> | 
+                    <span data-i18n="rtt">RTT</span>: <span id="ntp-rtt-val">--</span> | 
+                    <span>Jitter</span>: <span id="ntp-jitter-val">±0.0 ms</span> | 
+                    <span>Node</span>: <span id="ntp-colo-val">EDGE</span>
+                </span>
             </h3>
 
             <div class="canvas-wrapper">
                 <canvas id="oscilloscope-canvas" width="1000" height="90"></canvas>
             </div>
+
+            <div class="inspector-hint" data-i18n="tapCellHint">Click or tap any second to inspect frame details</div>
 
             <div id="inspector-grid" class="frame-inspector"></div>
 
@@ -197,18 +250,22 @@
                 </div>
                 <div class="legend-item">
                     <span class="legend-color bit1"></span>
-                    <span>Binary 1 (0.5s / 0.2s)</span>
+                    <span>Binary 1</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-color bit0"></span>
-                    <span>Binary 0 (0.8s / 0.1s)</span>
+                    <span>Binary 0</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color missing"></span>
+                    <span>Missing / Sync Pulse</span>
                 </div>
             </div>
 
-            <div class="info-strip" style="margin-top: 1rem;">
-                <div><strong><span data-i18n="currentSec">Second</span>:</strong> <span id="active-sec-val">--</span></div>
-                <div><strong><span data-i18n="symbolType">Symbol</span>:</strong> <span id="active-symbol-val">--</span></div>
-                <div><strong><span data-i18n="fieldLabel">Field</span>:</strong> <span id="active-field-val">--</span></div>
+            <div class="info-strip">
+                <div class="info-cell"><strong><span data-i18n="currentSec">Second</span>:</strong> <span id="active-sec-val">--</span></div>
+                <div class="info-cell"><strong><span data-i18n="symbolType">Symbol</span>:</strong> <span id="active-symbol-val">--</span></div>
+                <div class="info-cell"><strong><span data-i18n="fieldLabel">Field</span>:</strong> <span id="active-field-val">--</span></div>
             </div>
         </section>
 
@@ -223,7 +280,7 @@
         <!-- Documentation & Guide Accordions -->
         <details>
             <summary data-i18n="instructionsTitle">How to Use</summary>
-            <ol style="margin-top: 0.75rem;">
+            <ol class="accordion-list">
                 <li data-i18n="step1">1. Connect standard wired earphones into the headphone jack or USB-C/Lightning audio adapter.</li>
                 <li data-i18n="step2">2. Wrap the earphone cable 2 to 4 times around your radio-controlled clock near its internal antenna.</li>
                 <li data-i18n="step3">3. Set your device volume to 100% (Maximum).</li>
@@ -241,23 +298,50 @@
 
         <details>
             <summary data-i18n="compatTitle">Supported Clocks & Watch Models</summary>
-            <ul style="margin-top: 0.75rem; padding-left: 1.2rem; font-size: 0.9rem; color: var(--text-secondary);">
-                <li style="margin-bottom: 0.4rem;" data-i18n="compatCasio"><strong>Casio:</strong> G-Shock Multi-Band 6 / Multi-Band 5, Wave Ceptor, Pro Trek, Edifice, Oceanus, Lineage.</li>
-                <li style="margin-bottom: 0.4rem;" data-i18n="compatCitizen"><strong>Citizen:</strong> Eco-Drive Radio-Controlled, Attesa, Promaster, Exceed, Perfex Multi 3000.</li>
-                <li style="margin-bottom: 0.4rem;" data-i18n="compatSeiko"><strong>Seiko:</strong> Radio Wave Control, Brightz, Dolce & Exceline, Spirit Smart, and Seiko Wall/Desk Clocks.</li>
-                <li style="margin-bottom: 0.4rem;" data-i18n="compatOther"><strong>Other Brands:</strong> Junghans Mega, Braun, Rhythm, La Crosse Technology, AcuRite, Oregon Scientific, TFA Dostmann.</li>
-                <li style="margin-bottom: 0.4rem; color: var(--warning-color);" data-i18n="compatNotSupported"><strong>Not Supported:</strong> GPS-only watches (Citizen Satellite Wave, Seiko GPS Astron in satellite mode), Bluetooth-only watches without radio receivers, and standard mechanical/quartz watches.</li>
+            <ul class="accordion-list compat-list">
+                <li data-i18n="compatCasio"><strong>Casio:</strong> G-Shock Multi-Band 6 / Multi-Band 5, Wave Ceptor, Pro Trek, Edifice, Oceanus, Lineage.</li>
+                <li data-i18n="compatCitizen"><strong>Citizen:</strong> Eco-Drive Radio-Controlled, Attesa, Promaster, Exceed, Perfex Multi 3000.</li>
+                <li data-i18n="compatSeiko"><strong>Seiko:</strong> Radio Wave Control, Brightz, Dolce & Exceline, Spirit Smart, and Seiko Wall/Desk Clocks.</li>
+                <li data-i18n="compatOther"><strong>Other Brands:</strong> Junghans Mega, Braun, Rhythm, La Crosse Technology, AcuRite, Oregon Scientific, TFA Dostmann.</li>
+                <li class="not-supported-item" data-i18n="compatNotSupported"><strong>Not Supported:</strong> GPS-only watches (Citizen Satellite Wave, Seiko GPS Astron in satellite mode), Bluetooth-only watches without radio receivers, and standard mechanical/quartz watches.</li>
             </ul>
         </details>
 
         <!-- Footer -->
         <footer>
             <p><span data-i18n="footer">Open-source project maintained by 9M2PJU. Based on original concept by shogo82148.</span></p>
-            <p style="margin-top: 0.4rem;">
+            <p class="footer-links">
                 <a href="tests/index.html">Run Test Suite</a> &bull;
                 <a href="https://github.com/9M2PJU/9M2PJU-WebTimeSignal" target="_blank" rel="noopener">GitHub Repository</a>
             </p>
         </footer>
+    </div>
+
+    <!-- iOS PWA Install Guidance Modal -->
+    <div id="ios-install-modal" class="modal-backdrop hidden">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ios-modal-title">
+            <div class="modal-header">
+                <h3 id="ios-modal-title" data-i18n="iosInstallTitle">Install on iOS (iPhone / iPad)</h3>
+                <button id="btn-close-ios-modal" class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="ios-step-item">
+                    <span class="ios-step-num">1</span>
+                    <span data-i18n="iosInstallStep1">1. Tap the Share button ⎋ at the bottom toolbar of Safari.</span>
+                </div>
+                <div class="ios-step-item">
+                    <span class="ios-step-num">2</span>
+                    <span data-i18n="iosInstallStep2">2. Scroll down and select 'Add to Home Screen' ➕.</span>
+                </div>
+                <div class="ios-step-item">
+                    <span class="ios-step-num">3</span>
+                    <span data-i18n="iosInstallStep3">3. Tap 'Add' in the top-right corner to install.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-done-ios-modal" class="btn btn-primary" style="width: 100%;" data-i18n="installLater">Dismiss</button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="js/app.js"></script>

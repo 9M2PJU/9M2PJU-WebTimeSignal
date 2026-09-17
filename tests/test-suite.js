@@ -204,4 +204,26 @@ export function registerAllTests(runner) {
             throw new Error('BPC sub-frame starts at 0, 20, 40 must be markers');
         }
     });
+
+    // ----------------------------------------------------
+    // Internationalization (i18n) & PWA Keys Tests
+    // ----------------------------------------------------
+    runner.addTest('I18n translations complete across EN, MS, JA including PWA install keys', async () => {
+        const { translations } = await import('../js/i18n.js');
+        const enKeys = Object.keys(translations.en);
+        const msKeys = Object.keys(translations.ms);
+        const jaKeys = Object.keys(translations.ja);
+
+        const requiredPWAKeys = ['installApp', 'installTitle', 'installDesc', 'installBtn', 'installLater', 'iosInstallTitle'];
+        for (const k of requiredPWAKeys) {
+            if (!enKeys.includes(k)) throw new Error(`Missing PWA key in EN: ${k}`);
+            if (!msKeys.includes(k)) throw new Error(`Missing PWA key in MS: ${k}`);
+            if (!jaKeys.includes(k)) throw new Error(`Missing PWA key in JA: ${k}`);
+        }
+
+        for (const k of enKeys) {
+            if (!msKeys.includes(k)) throw new Error(`Missing MS translation for key: ${k}`);
+            if (!jaKeys.includes(k)) throw new Error(`Missing JA translation for key: ${k}`);
+        }
+    });
 }
