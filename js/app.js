@@ -200,7 +200,10 @@ class App {
 
         // Audio Engine callbacks
         this.audio.onSecondChange = (sec, symbolInfo, frame) => {
-            this.currentFrame = frame;
+            if (this.currentFrame !== frame || sec === 0) {
+                this.currentFrame = frame;
+                this._renderFrameCells(frame);
+            }
             this._highlightSecond(sec, symbolInfo);
         };
 
@@ -407,9 +410,8 @@ class App {
         }
     }
 
-    _renderStaticFrame() {
-        const date = this._getCurrentTime();
-        const frame = this.currentEncoder.encodeFrame(date, this._getOptions());
+    _renderFrameCells(frame) {
+        if (!frame) return;
         for (let i = 0; i < 60; i++) {
             const cell = document.getElementById(`cell-${i}`);
             if (!cell) continue;
@@ -424,6 +426,13 @@ class App {
             }
             cell.title = `Sec ${i}: ${sym.label} (${sym.symbol}, ${Math.round(sym.toneDuration * 1000)}ms)`;
         }
+    }
+
+    _renderStaticFrame() {
+        const date = this._getCurrentTime();
+        const frame = this.currentEncoder.encodeFrame(date, this._getOptions());
+        this.currentFrame = frame;
+        this._renderFrameCells(frame);
     }
 
     _highlightSecond(sec, symbolInfo) {

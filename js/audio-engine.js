@@ -178,7 +178,6 @@ export class AudioEngine {
         const now = this.timeProvider ? this.timeProvider() : new Date();
         const nowMs = now.getTime();
         const currentSec = now.getSeconds();
-        const currentMin = now.getMinutes();
 
         // Check if we need to encode a new 60-second frame
         const currentMinuteEpoch = Math.floor(nowMs / 60000) * 60000;
@@ -189,9 +188,8 @@ export class AudioEngine {
             this.currentFrame = this.currentEncoder.encodeFrame(targetDate, this.options);
             this.scheduledSeconds.clear();
 
-            // Calculate AudioContext time reference for this frame's second 0
-            const clientNowEpoch = Date.now();
-            const frameStartOffsetSec = (currentMinuteEpoch - clientNowEpoch) / 1000;
+            // Calculate AudioContext time reference for this frame's second 0 (NTP locked)
+            const frameStartOffsetSec = (currentMinuteEpoch - nowMs) / 1000;
             this.audioFrameStartTime = this.ctx.currentTime + frameStartOffsetSec;
         }
 
