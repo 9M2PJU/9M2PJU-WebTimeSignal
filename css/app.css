@@ -98,9 +98,30 @@ header {
 }
 
 .app-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 16px var(--accent-glow);
+    border: 1.5px solid var(--border-color);
+    background: #0a0e14;
+    display: block;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-logo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 22px var(--accent-glow);
+}
+
+.pwa-banner-logo {
+    width: 42px;
+    height: 42px;
     border-radius: var(--radius-sm);
     flex-shrink: 0;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    background: #0a0e14;
 }
 
 .header-brand h1 {

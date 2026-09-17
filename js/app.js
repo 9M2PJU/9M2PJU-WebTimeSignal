@@ -549,7 +549,20 @@ class App {
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => {
+        navigator.serviceWorker.register('./sw.js').then((registration) => {
+            registration.update();
+            registration.addEventListener('updatefound', () => {
+                const installingWorker = registration.installing;
+                if (installingWorker) {
+                    installingWorker.addEventListener('statechange', () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('New WebTimeSignal version installed. Refreshing application...');
+                            window.location.reload();
+                        }
+                    });
+                }
+            });
+        }).catch(err => {
             console.warn('ServiceWorker registration failed:', err);
         });
     });

@@ -77,11 +77,11 @@
         <header>
             <div class="header-brand">
                 <div class="header-logo-group">
-                    <img src="icons/icon.svg" alt="9M2PJU WebTimeSignal Logo" class="app-logo" width="38" height="38">
+                    <img src="icons/icon.svg" alt="9M2PJU WebTimeSignal Logo" class="app-logo" width="48" height="48">
                     <div>
                         <h1>
                             <span data-i18n="title">9M2PJU WebTimeSignal</span>
-                            <span class="badge">v2.1</span>
+                            <span class="badge">v2.2</span>
                         </h1>
                         <p data-i18n="subtitle">Browser-based LF Radio Time Signal Transmitter & Clock Synchronizer</p>
                     </div>
@@ -106,7 +106,7 @@
         <!-- PWA Install Card Banner (Collapsible/Dismissible) -->
         <div id="pwa-install-banner" class="pwa-banner hidden">
             <div class="pwa-banner-content">
-                <div class="pwa-banner-icon">⚡</div>
+                <img src="icons/icon.svg" alt="WebTimeSignal Icon" class="pwa-banner-logo" width="42" height="42">
                 <div class="pwa-banner-text">
                     <strong data-i18n="installTitle">Install WebTimeSignal PWA</strong>
                     <span data-i18n="installDesc">Install as a standalone app on your device for fast offline access and full-screen experience.</span>
@@ -321,7 +321,10 @@
     <div id="ios-install-modal" class="modal-backdrop hidden">
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ios-modal-title">
             <div class="modal-header">
-                <h3 id="ios-modal-title" data-i18n="iosInstallTitle">Install on iOS (iPhone / iPad)</h3>
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <img src="icons/icon.svg" alt="App Logo" width="30" height="30" style="border-radius: 6px;">
+                    <h3 id="ios-modal-title" data-i18n="iosInstallTitle">Install on iOS (iPhone / iPad)</h3>
+                </div>
                 <button id="btn-close-ios-modal" class="modal-close" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
