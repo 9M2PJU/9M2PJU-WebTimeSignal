@@ -69,18 +69,8 @@ export class JJYEncoder {
         // s00: Marker (M)
         setMarker(0, 'M (Frame Marker)');
 
-        // s01 - s08: Minute BCD
-        const minBits = BaseEncoder.toBCDBits(minute, [40, 20, 10, 8, 4, 2, 1]);
-        const minWeights = [40, 20, 10, 8, 4, 2, 1];
-        let pa2Sum = 0;
-        for (let i = 0; i < 7; i++) {
-            const b = minBits[i];
-            pa2Sum += b;
-            setBit(i + 1, b, `Min ${minWeights[i]}`);
-        }
-        // second 8 is Min 1 (s01..s08 = 8 bits total: 40,20,10, 0(unused/padding), 8,4,2,1)
-        // Note standard JJY: bit 1=40, bit 2=20, bit 3=10, bit 4=0 (unused), bit 5=8, bit 6=4, bit 7=2, bit 8=1
-        // Let's accurately set bits 1..8:
+        // s01 - s08: Minute BCD (JJY standard layout)
+        // bit 1=40, bit 2=20, bit 3=10, bit 4=0 (unused), bit 5=8, bit 6=4, bit 7=2, bit 8=1
         const minBitsStandard = [
             Math.floor(minute / 10) >= 4 ? 1 : 0,
             (Math.floor(minute / 10) % 4) >= 2 ? 1 : 0,
@@ -91,7 +81,7 @@ export class JJYEncoder {
             ((minute % 10) % 4) >= 2 ? 1 : 0,
             (minute % 10) % 2
         ];
-        pa2Sum = minBitsStandard.reduce((acc, v) => acc + v, 0);
+        const pa2Sum = minBitsStandard.reduce((acc, v) => acc + v, 0);
         const minLabels = ['Min 40', 'Min 20', 'Min 10', 'Min 0', 'Min 8', 'Min 4', 'Min 2', 'Min 1'];
         for (let i = 0; i < 8; i++) {
             setBit(i + 1, minBitsStandard[i], minLabels[i]);

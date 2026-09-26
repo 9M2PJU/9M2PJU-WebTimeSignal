@@ -205,6 +205,88 @@ export function registerAllTests(runner) {
         }
     });
 
+    runner.addTest('JJYEncoder converts UTC input to JST wall time', () => {
+        const encoder = new JJYEncoder(40);
+        // 2024-05-15T14:47:00Z == 23:47 JST. Minute field must read 47.
+        const frame = encoder.encodeFrame(new Date('2024-05-15T14:47:00Z'));
+        const bits = [];
+        for (let i = 1; i <= 8; i++) bits.push(frame[i].bitValue);
+        // Decode BCD 40,20,10,0,8,4,2,1
+        const weights = [40, 20, 10, 0, 8, 4, 2, 1];
+        const minute = bits.reduce((acc, b, idx) => acc + b * weights[idx], 0);
+        if (minute !== 47) throw new Error(`Expected JST minute 47, decoded ${minute}`);
+    });
+
+    runner.addTest('DCF77Encoder hour parity P2 and date parity P3 are even', () => {
+        const encoder = new DCF77Encoder();
+        const frame = encoder.encodeFrame(new Date('2024-07-20T18:45:00Z'), { summerTime: true });
+        const hourBits = [];
+        for (let i = 29; i <= 34; i++) hourBits.push(frame[i].bitValue);
+        const expectedP2 = hourBits.reduce((a, b) => a + b, 0) % 2;
+        if (frame[35].bitValue !== expectedP2) throw new Error('DCF77 P2 mismatch');
+        const dateBits = [];
+        for (let i = 36; i <= 57; i++) dateBits.push(frame[i].bitValue);
+        const expectedP3 = dateBits.reduce((a, b) => a + b, 0) % 2;
+        if (frame[58].bitValue !== expectedP3) throw new Error('DCF77 P3 mismatch');
+        // Z1/Z2 must be complementary
+        if (frame[17].bitValue === frame[18].bitValue) throw new Error('DCF77 Z1/Z2 must be complementary');
+    });
+
+    runner.addTest('MSFEncoder odd parities match data fields', () => {
+        const encoder = new MSFEncoder();
+        const frame = encoder.encodeFrame(new Date('2024-10-01T08:15:00Z'));
+        const collect = (from, to) => { const a = []; for (let i = from; i <= to; i++) a.push(frame[i].bitValue); return a; };
+        const odd = (bits) => bits.reduce((a, b) => a + b, 0) % 2 === 0 ? 1 : 0;
+        if (frame[53].bitValue !== odd(collect(17, 24))) throw new Error('MSF year parity mismatch');
+        if (frame[56].bitValue !== odd([...collect(39, 44), ...collect(45, 51)])) throw new Error('MSF time parity mismatch');
+    });
+
+    runner.addTest('WWVBEncoder leap-year flag follows UTC year', () => {
+        const encoder = new WWVBEncoder();
+        const leap = encoder.encodeFrame(new Date('2024-06-01T00:00:00Z'));
+        const nonLeap = encoder.encodeFrame(new Date('2023-06-01T00:00:00Z'));
+        if (leap[55].bitValue !== 1) throw new Error('2024 should set leap-year bit');
+        if (nonLeap[55].bitValue !== 0) throw new Error('2023 should clear leap-year bit');
+    });
+
+    runner.addTest('BPCEncoder uses only 4-state pulse widths 0.1-0.4s', () => {
+        const encoder = new BPCEncoder();
+        const frame = encoder.encodeFrame(new Date('2024-11-12T06:22:00Z'));
+        const allowed = new Set([0.1, 0.2, 0.3, 0.4]);
+        for (const sym of frame) {
+            const rounded = Math.round(sym.toneDuration * 10) / 10;
+            if (!allowed.has(rounded)) throw new Error(`Invalid BPC pulse ${sym.toneDuration} at s${sym.second}`);
+        }
+    });
+
+    runner.addTest('NTPSync.filterSamples rejects high-RTT outliers and keeps median', async () => {
+        const { NTPSync } = await import('../js/ntp-sync.js');
+        const samples = [
+            { offset: 5, rtt: 8 }, { offset: 6, rtt: 9 }, { offset: 4, rtt: 10 },
+            { offset: 500, rtt: 300 }, { offset: -400, rtt: 250 }
+        ];
+        const f = NTPSync.filterSamples(samples);
+        if (f.kept !== 3) throw new Error(`Expected 3 kept samples, got ${f.kept}`);
+        if (Math.abs(f.offset - 5) > 1) throw new Error(`Median should be ~5, got ${f.offset}`);
+        if (NTPSync.filterSamples([]) !== null) throw new Error('Empty input should return null');
+        const single = NTPSync.filterSamples([{ offset: 12, rtt: 20 }]);
+        if (single.offset !== 12) throw new Error('Single-sample passthrough broken');
+    });
+
+    runner.addTest('NTPSync.getNow advances monotonically', async () => {
+        const { NTPSync } = await import('../js/ntp-sync.js');
+        const ntp = new NTPSync();
+        clearInterval(ntp.autoSyncInterval);
+        ntp.offsetMs = 100;
+        ntp._anchorPerf = performance.now();
+        ntp._anchorDate = Date.now();
+        const t1 = ntp.getNow().getTime();
+        await new Promise(r => setTimeout(r, 30));
+        const t2 = ntp.getNow().getTime();
+        if (!(t2 > t1)) throw new Error('getNow() did not advance');
+        if (t2 - t1 > 1000) throw new Error('getNow() jumped unexpectedly');
+    });
+
     // ----------------------------------------------------
     // Internationalization (i18n) & PWA Keys Tests
     // ----------------------------------------------------

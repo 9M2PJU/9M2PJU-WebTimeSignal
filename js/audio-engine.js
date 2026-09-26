@@ -19,6 +19,7 @@ export class AudioEngine {
         this.merger = null;
         this.analyser = null;
         this.waveShaper = null;
+        this.shaperInput = null;
 
         // Settings
         this.volume = 1.0;
@@ -33,6 +34,7 @@ export class AudioEngine {
         this.currentFrame = null;
         this.currentFrameStartTime = 0; // Epoch ms of frame second 0
         this.audioFrameStartTime = 0;   // ctx.currentTime corresponding to frame second 0
+        this.wallToAudioOffset = 0;     // ctx.currentTime - performance.now()/1000 anchor
         this.scheduledSeconds = new Set();
         this.lastScheduledMinute = -1;
 
@@ -62,7 +64,9 @@ export class AudioEngine {
     }
 
     /**
-     * Initialize Web Audio graph.
+     * Initialize Web Audio graph. Fixed topology (connected once):
+     * shaperInput -> [waveShaper?] -> leftGain/rightGain -> merger
+     *   -> masterGain -> analyser -> destination
      */
     async init() {
         if (!this.ctx) {
@@ -74,9 +78,9 @@ export class AudioEngine {
             await this.ctx.resume();
         }
 
-        // Clean existing nodes if any
-        if (this.masterGain) {
-            try { this.masterGain.disconnect(); } catch (e) {}
+        // Tear down previous graph fully to avoid node leaks on restart.
+        for (const node of [this.shaperInput, this.waveShaper, this.leftGain, this.rightGain, this.merger, this.masterGain, this.analyser]) {
+            try { if (node) node.disconnect(); } catch (e) {}
         }
 
         // Master Gain
@@ -88,7 +92,8 @@ export class AudioEngine {
         this.analyser.fftSize = 512;
         this.analyser.smoothingTimeConstant = 0.8;
 
-        // WaveShaper Overdrive
+        // Shared input + WaveShaper Overdrive (connected once)
+        this.shaperInput = this.ctx.createGain();
         this.waveShaper = this.ctx.createWaveShaper();
         this.waveShaper.curve = this._makeDistortionCurve(40);
         this.waveShaper.oversample = '4x';
@@ -99,15 +104,28 @@ export class AudioEngine {
         this.rightGain = this.ctx.createGain();
 
         this._updateStereoPolarity();
+        this._rebuildDriveChain();
 
-        // Connect graph
-        // Source -> [WaveShaper] -> Left/Right Gains -> Merger -> MasterGain -> Analyser -> Destination
         this.leftGain.connect(this.merger, 0, 0);   // To Left Channel
         this.rightGain.connect(this.merger, 0, 1);  // To Right Channel
 
         this.merger.connect(this.masterGain);
         this.masterGain.connect(this.analyser);
         this.analyser.connect(this.ctx.destination);
+    }
+
+    _rebuildDriveChain() {
+        if (!this.shaperInput || !this.leftGain || !this.rightGain || !this.waveShaper) return;
+        try { this.shaperInput.disconnect(); } catch (e) {}
+        try { this.waveShaper.disconnect(); } catch (e) {}
+        if (this.harmonicOverdrive) {
+            this.shaperInput.connect(this.waveShaper);
+            this.waveShaper.connect(this.leftGain);
+            this.waveShaper.connect(this.rightGain);
+        } else {
+            this.shaperInput.connect(this.leftGain);
+            this.shaperInput.connect(this.rightGain);
+        }
     }
 
     _updateStereoPolarity() {
@@ -125,6 +143,7 @@ export class AudioEngine {
 
     setHarmonicOverdrive(enabled) {
         this.harmonicOverdrive = !!enabled;
+        if (this.ctx) this._rebuildDriveChain();
     }
 
     setVolume(val) {
@@ -140,11 +159,13 @@ export class AudioEngine {
 
     /**
      * Start transmitting time signals continuously.
+     * Safe to call while already running: previous session is stopped first.
      * @param {Object} encoder Protocol encoder instance (e.g. JJYEncoder, WWVBEncoder)
      * @param {Function} timeProvider Function returning current Date (e.g. from NTPSync)
      * @param {Object} options Options like summerTime, leapSecond
      */
     async start(encoder, timeProvider, options = {}) {
+        if (this.isPlaying) this._stopSessionOnly();
         await this.init();
         this.currentEncoder = encoder;
         this.timeProvider = timeProvider;
@@ -155,6 +176,12 @@ export class AudioEngine {
         // Reset scheduling state
         this.scheduledSeconds.clear();
         this.lastScheduledMinute = -1;
+        this.currentFrameStartTime = 0;
+
+        // Anchor wall-clock to audio-clock to detect drift.
+        if (typeof performance !== 'undefined' && performance.now) {
+            this.wallToAudioOffset = this.ctx.currentTime - performance.now() / 1000;
+        }
 
         // Request Screen Wake Lock
         if ('wakeLock' in navigator) {
@@ -191,6 +218,17 @@ export class AudioEngine {
             // Calculate AudioContext time reference for this frame's second 0 (NTP locked)
             const frameStartOffsetSec = (currentMinuteEpoch - nowMs) / 1000;
             this.audioFrameStartTime = this.ctx.currentTime + frameStartOffsetSec;
+            if (typeof performance !== 'undefined' && performance.now) {
+                this.wallToAudioOffset = this.ctx.currentTime - performance.now() / 1000;
+            }
+        } else if (typeof performance !== 'undefined' && performance.now) {
+            // Slowly correct audio/wall drift (e.g. AudioContext clock vs NTP wall).
+            const expectedAudio = performance.now() / 1000 + this.wallToAudioOffset;
+            const drift = this.ctx.currentTime - expectedAudio;
+            if (Math.abs(drift) > 0.05) {
+                this.audioFrameStartTime += drift;
+                this.wallToAudioOffset = this.ctx.currentTime - performance.now() / 1000;
+            }
         }
 
         // Notify UI about current playback second
@@ -215,15 +253,23 @@ export class AudioEngine {
                 this._schedulePulse(secondStartAudioTime, symbolInfo.toneDuration);
             }
         }
+
+        // Free memory: drop seconds of a previous minute that leaked through.
+        if (this.scheduledSeconds.size > 70) {
+            this.scheduledSeconds.clear();
+        }
     }
 
     /**
      * Schedule a single tone pulse at a specific audio timestamp.
+     * Routes through the shared shaperInput so per-pulse connect() calls
+     * cannot accumulate gain.
      * @param {number} startTime AudioContext time
      * @param {number} duration Tone duration in seconds
      */
     _schedulePulse(startTime, duration) {
         if (duration <= 0.001) return; // Silent / missing pulse (e.g. DCF77 s59)
+        if (!this.shaperInput) return;
 
         const osc = this.ctx.createOscillator();
         const pulseGain = this.ctx.createGain();
@@ -233,28 +279,26 @@ export class AudioEngine {
 
         // Micro-envelope to prevent audio clicks (1ms ramp)
         const rampTime = 0.002;
-        pulseGain.gain.setValueAtTime(0.0001, startTime);
-        pulseGain.gain.exponentialRampToValueAtTime(1.0, startTime + rampTime);
-        pulseGain.gain.setValueAtTime(1.0, startTime + duration - rampTime);
-        pulseGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+        const safeStart = Math.max(startTime, this.ctx.currentTime);
+        pulseGain.gain.setValueAtTime(0.0001, safeStart);
+        pulseGain.gain.exponentialRampToValueAtTime(1.0, safeStart + rampTime);
+        pulseGain.gain.setValueAtTime(1.0, safeStart + duration - rampTime);
+        pulseGain.gain.exponentialRampToValueAtTime(0.0001, safeStart + duration);
 
         osc.connect(pulseGain);
+        pulseGain.connect(this.shaperInput);
 
-        if (this.harmonicOverdrive && this.waveShaper) {
-            pulseGain.connect(this.waveShaper);
-            this.waveShaper.connect(this.leftGain);
-            this.waveShaper.connect(this.rightGain);
-        } else {
-            pulseGain.connect(this.leftGain);
-            pulseGain.connect(this.rightGain);
-        }
-
-        osc.start(startTime);
-        osc.stop(startTime + duration);
+        osc.start(safeStart);
+        osc.stop(safeStart + duration);
+        osc.onended = () => {
+            try { osc.disconnect(); } catch (e) {}
+            try { pulseGain.disconnect(); } catch (e) {}
+        };
     }
 
     /**
      * Play a quick 1-second carrier test tone for volume and coil coupling testing.
+     * Routes through the same drive chain as transmission for consistent level.
      * @param {number} freq Base frequency in Hz
      */
     async playTestTone(freq = 13333.333) {
@@ -272,34 +316,48 @@ export class AudioEngine {
         gain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
 
         osc.connect(gain);
-        gain.connect(this.leftGain);
-        gain.connect(this.rightGain);
+        gain.connect(this.shaperInput);
 
         osc.start(t);
         osc.stop(t + 1.0);
+        osc.onended = () => {
+            try { osc.disconnect(); } catch (e) {}
+            try { gain.disconnect(); } catch (e) {}
+        };
     }
 
-    /**
-     * Stop signal transmission and release resources.
-     */
-    stop() {
+    _stopSessionOnly() {
         this.isPlaying = false;
         this.timer.stop();
         this.scheduledSeconds.clear();
         this.currentFrame = null;
-
         if (this.wakeLock) {
             try {
                 this.wakeLock.release();
             } catch (e) {}
             this.wakeLock = null;
         }
+    }
+
+    /**
+     * Stop signal transmission and release resources.
+     */
+    stop() {
+        this._stopSessionOnly();
 
         if (this.ctx) {
-            try {
-                this.ctx.close();
-            } catch (e) {}
+            const ctxToClose = this.ctx;
             this.ctx = null;
+            this.masterGain = null;
+            this.leftGain = null;
+            this.rightGain = null;
+            this.merger = null;
+            this.analyser = null;
+            this.waveShaper = null;
+            this.shaperInput = null;
+            try {
+                ctxToClose.close();
+            } catch (e) {}
         }
 
         if (this.onStatusChange) this.onStatusChange(false);

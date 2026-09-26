@@ -45,6 +45,8 @@
     <meta name="apple-mobile-web-app-title" content="WebTimeSignal">
     <meta name="theme-color" content="#238636">
     <meta name="color-scheme" content="dark light">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://cloudflare.com https://1.1.1.1 https://1.0.0.1; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; worker-src 'self' blob:; media-src 'self' blob:">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
 
     <link rel="stylesheet" href="css/app.css">
 
@@ -81,7 +83,7 @@
                     <div>
                         <h1>
                             <span data-i18n="title">9M2PJU WebTimeSignal</span>
-                            <span class="badge">v2.2</span>
+                            <span class="badge">v2.3</span>
                         </h1>
                         <p data-i18n="subtitle">Browser-based LF Radio Time Signal Transmitter & Clock Synchronizer</p>
                     </div>

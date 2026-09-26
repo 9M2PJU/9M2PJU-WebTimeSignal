@@ -4,12 +4,15 @@
  */
 
 export async function onRequestGet(context) {
-    const serverTimestampMs = Date.now();
+    const tStart = Date.now();
+    const serverTimestampMs = tStart;
     const cf = context.request.cf || {};
+    const tEnd = Date.now();
 
     const responsePayload = {
         serverTimestampMs: serverTimestampMs,
         serverTimeIso: new Date(serverTimestampMs).toISOString(),
+        processingMs: tEnd - tStart,
         colo: cf.colo || 'EDGE',
         country: cf.country || 'GLOBAL',
         timezone: cf.timezone || 'UTC',
@@ -23,7 +26,8 @@ export async function onRequestGet(context) {
             'Access-Control-Allow-Origin': '*',
             'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
             'Pragma': 'no-cache',
-            'X-Atomic-Colo': cf.colo || 'EDGE'
+            'X-Atomic-Colo': cf.colo || 'EDGE',
+            'Server-Timing': `edge;dur=${tEnd - tStart}`
         }
     });
 }

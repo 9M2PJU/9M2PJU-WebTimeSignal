@@ -2,10 +2,16 @@
  * 9M2PJU WebTimeSignal - Service Worker for Offline PWA Support
  */
 
-const CACHE_NAME = 'web-time-signal-v2.2';
+const CACHE_NAME = 'web-time-signal-v2.3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
+    './tests/index.html',
+    './tests/test-suite.js',
+    './js/encoders/wwvb.js',
+    './js/encoders/dcf77.js',
+    './js/encoders/msf.js',
+    './js/encoders/bpc.js',
     './css/app.css',
     './js/app.js',
     './js/i18n.js',
@@ -64,7 +70,7 @@ self.addEventListener('fetch', (e) => {
                     caches.open(CACHE_NAME).then((cache) => cache.put(e.request, resClone));
                 }
                 return res;
-            }).catch(() => caches.match('./index.html'))
+            }).catch(() => caches.match(e.request).then((cached) => cached || caches.match('./index.html')))
         );
         return;
     }

@@ -1,7 +1,7 @@
 # 9M2PJU WebTimeSignal
 
 [![Live Production](https://img.shields.io/badge/Production-time.hamradio.my-238636?style=flat&logo=cloudflare)](https://time.hamradio.my)
-[![Test Suite](https://img.shields.io/badge/Unit%20Tests-12%20Passing-brightgreen?style=flat&logo=node.js)](https://time.hamradio.my/tests/)
+[![Test Suite](https://img.shields.io/badge/Unit%20Tests-19%20Passing-brightgreen?style=flat&logo=node.js)](https://time.hamradio.my/tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![PWA Ready](https://img.shields.io/badge/PWA-Offline%20Ready-orange?style=flat&logo=pwa)](manifest.webmanifest)
 
@@ -113,7 +113,7 @@ This achieves a **$2\times$ peak-to-peak voltage swing ($+6\text{ dB}$ power gai
 ### 2. WaveShaper Harmonic Overdrive
 Modern browser synthesizers band-limit square waves using internal Fourier tables to avoid digital audio aliasing. WebTimeSignal routes the audio stream through a non-linear `WaveShaperNode` with a sharp sigmoid clipping transfer curve:
 
-$$f(x) = \frac{(3 + k) \cdot x \cdot 20^\circ}{\pi + k \cdot |x|}$$
+$$f(x) = \frac{(3 + k) \cdot x \cdot 20 \cdot \pi/180}{\pi + k \cdot |x|}$$
 
 This forces extremely steep rising and falling voltage transitions ($\frac{dV}{dt}$), injecting high-energy odd harmonic spurs directly into the analog output stage.
 
@@ -157,7 +157,8 @@ flowchart TD
 * **Burst Probing with Outlier Rejection**: Executes 8 interleaved probes across Anycast endpoints, sorts samples by Round-Trip Time (RTT), and rejects the top 50% high-jitter samples.
 * **Microsecond Monotonic Timestamping**: Uses `performance.now()` to measure one-way latency ($\frac{\text{RTT}}{2}$) independent of host OS clock steps:
   $$\text{Offset} = \left(T_{\text{server}} + \frac{\text{RTT}}{2}\right) - T_{\text{client\_recv}}$$
-* **Automatic Crystal Drift Tracking**: Re-probes every 5 minutes in the background to compensate for local quartz oscillator thermal drift.
+* **Automatic Crystal Drift Tracking**: Re-probes every 5 minutes in the background to compensate for local quartz oscillator thermal drift. Probing pauses while the tab is hidden and re-syncs on return if stale (>60s).
+* **Monotonic Clock Extrapolation**: `getNow()` advances from a `performance.now()` anchor instead of a frozen `Date.now() + offset`, so corrections stay smooth between re-syncs and immune to OS clock steps. Offset is kept at float precision internally (rounded only for display).
 
 ---
 
@@ -327,6 +328,8 @@ stateDiagram-v2
 ```
 9M2PJU-WebTimeSignal/
 ├── index.html                   # Modern responsive UI with complete SEO, Open Graph & Schema.org JSON-LD
+├── _headers                     # Cloudflare Pages security & cache headers (CSP, Permissions-Policy)
+├── .github/workflows/test.yml   # CI: unit tests across UTC / Asia/Tokyo / America/New_York
 ├── manifest.webmanifest         # PWA Manifest for standalone home screen installation
 ├── sw.js                        # Service Worker caching all assets for 100% offline usage
 ├── package.json                 # Project configuration and npm test scripts

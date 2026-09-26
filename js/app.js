@@ -33,6 +33,9 @@ class App {
         this.wakeLockSentinel = null;
         this.deferredInstallPrompt = null;
         this.inspectedSecond = null;
+        this._vizData = null;
+        this._customBase = null;
+        this._customWall = 0;
 
         this.dom = {};
         this._bindDOM();
@@ -94,6 +97,7 @@ class App {
             this.i18n.setLanguage(e.target.value);
             this._updateClockDisplay();
             this._renderStaticFrame();
+            this._refreshTransmitButton();
         });
 
         // Theme Switcher
@@ -113,12 +117,13 @@ class App {
         }
 
         // Protocol Selection
-        this.dom.protocolSelect.addEventListener('change', (e) => {
+        this.dom.protocolSelect.addEventListener('change', async (e) => {
             const code = e.target.value;
             if (this.encoders[code]) {
                 this.currentEncoder = this.encoders[code];
                 if (this.isTransmitting) {
-                    this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
+                    this.audio.stop();
+                    await this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
                 }
                 this._renderStaticFrame();
             }
@@ -179,9 +184,10 @@ class App {
             this.audio.setHarmonicOverdrive(e.target.checked);
         });
 
-        this.dom.summerTimeToggle.addEventListener('change', () => {
+        this.dom.summerTimeToggle.addEventListener('change', async () => {
             if (this.isTransmitting) {
-                this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
+                this.audio.stop();
+                await this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
             }
             this._renderStaticFrame();
         });
@@ -189,7 +195,12 @@ class App {
         // Custom Time Override Toggle
         this.dom.customTimeToggle.addEventListener('change', (e) => {
             this.dom.customTimeGroup.style.display = e.target.checked ? 'block' : 'none';
+            this._captureCustomBase();
         });
+
+        if (this.dom.customTimeInput) {
+            this.dom.customTimeInput.addEventListener('change', () => this._captureCustomBase());
+        }
 
         // Visibility change for Screen Wake Lock
         document.addEventListener('visibilitychange', async () => {
@@ -209,13 +220,7 @@ class App {
 
         this.audio.onStatusChange = (running) => {
             this.isTransmitting = running;
-            this.dom.btnStartStop.className = running ? 'btn btn-danger btn-action' : 'btn btn-primary btn-action';
-            const labelSpan = this.dom.btnStartStop.querySelector('span:not(.btn-indicator)');
-            if (labelSpan) {
-                labelSpan.textContent = running ? this.i18n.t('stop') : this.i18n.t('start');
-            } else {
-                this.dom.btnStartStop.textContent = running ? this.i18n.t('stop') : this.i18n.t('start');
-            }
+            this._refreshTransmitButton();
         };
     }
 
@@ -344,6 +349,41 @@ class App {
         if (this.dom.wakeLockBadge) this.dom.wakeLockBadge.classList.add('hidden');
     }
 
+    _refreshTransmitButton() {
+        const running = this.isTransmitting;
+        this.dom.btnStartStop.className = running ? 'btn btn-danger btn-action' : 'btn btn-primary btn-action';
+        const labelSpan = this.dom.btnStartStop.querySelector('span:not(.btn-indicator)');
+        const label = running ? this.i18n.t('stop') : this.i18n.t('start');
+        if (labelSpan) {
+            labelSpan.textContent = label;
+        } else {
+            this.dom.btnStartStop.textContent = label;
+        }
+    }
+
+    _showToast(message, ms = 4000) {
+        let toast = document.getElementById('app-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'app-toast';
+            toast.className = 'app-toast';
+            toast.setAttribute('role', 'status');
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('visible');
+        clearTimeout(this._toastTimer);
+        this._toastTimer = setTimeout(() => toast.classList.remove('visible'), ms);
+    }
+
+    _captureCustomBase() {
+        if (this.dom.customTimeToggle.checked && this.dom.customTimeInput.value) {
+            this._customBase = new Date(this.dom.customTimeInput.value).getTime();
+            this._customWall = Date.now();
+        } else {
+            this._customBase = null;
+        }
+    }
     _getOptions() {
         return {
             summerTime: this.dom.summerTimeToggle.checked,
@@ -352,15 +392,27 @@ class App {
     }
 
     _getCurrentTime() {
-        if (this.dom.customTimeToggle.checked && this.dom.customTimeInput.value) {
-            return new Date(this.dom.customTimeInput.value);
+        if (this.dom.customTimeToggle.checked) {
+            if (this._customBase === null) this._captureCustomBase();
+            if (this._customBase !== null && !isNaN(this._customBase)) {
+                return new Date(this._customBase + (Date.now() - this._customWall));
+            }
         }
         return this.ntp.getNow();
     }
 
     async _startTransmission() {
-        await this._requestWakeLock();
-        this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
+        if (this.audio.volume < 0.9) {
+            this._showToast('Output volume is below 90% — watches may fail to sync. Set volume to 100%.', 5000);
+        }
+        try {
+            await this._requestWakeLock();
+            await this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
+        } catch (err) {
+            console.warn('Transmission start failed:', err);
+            await this._releaseWakeLock();
+            this._showToast('Audio output was blocked by the browser. Tap Start again to allow audio.', 5000);
+        }
     }
 
     async _stopTransmission() {
@@ -524,7 +576,10 @@ class App {
             }
 
             const bufferLength = this.audio.analyser.fftSize;
-            const dataArray = new Uint8Array(bufferLength);
+            if (!this._vizData || this._vizData.length !== bufferLength) {
+                this._vizData = new Uint8Array(bufferLength);
+            }
+            const dataArray = this._vizData;
             this.audio.analyser.getByteTimeDomainData(dataArray);
 
             ctx.lineWidth = 2 * dpr;
@@ -555,7 +610,7 @@ class App {
     }
 }
 
-// Register Service Worker for PWA
+// Register Service Worker for PWA (opt-in update: never reload mid-transmission)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then((registration) => {
@@ -565,8 +620,8 @@ if ('serviceWorker' in navigator) {
                 if (installingWorker) {
                     installingWorker.addEventListener('statechange', () => {
                         if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            console.log('New WebTimeSignal version installed. Refreshing application...');
-                            window.location.reload();
+                            console.log('New WebTimeSignal version available.');
+                            window.dispatchEvent(new CustomEvent('webtimesignal:update-available'));
                         }
                     });
                 }
@@ -574,6 +629,14 @@ if ('serviceWorker' in navigator) {
         }).catch(err => {
             console.warn('ServiceWorker registration failed:', err);
         });
+    });
+    window.addEventListener('webtimesignal:update-available', () => {
+        const toast = document.createElement('div');
+        toast.className = 'app-toast visible';
+        toast.setAttribute('role', 'status');
+        toast.textContent = 'A new version is available. Stop transmission and refresh to update.';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 8000);
     });
 }
 

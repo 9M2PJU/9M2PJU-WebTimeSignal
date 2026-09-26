@@ -935,6 +935,42 @@ footer a:hover {
     background: var(--bg-card);
 }
 
+/* App Toast (volume warnings, update notices, audio errors) */
+.app-toast {
+    position: fixed;
+    left: 50%;
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--warning-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
+    padding: 0.8rem 1.1rem;
+    font-size: 0.88rem;
+    max-width: min(92vw, 560px);
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.app-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-toast,
+    .cell,
+    .btn-install {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
 /* Responsive Breakpoints & Mobile Polish */
 @media (max-width: 480px) {
     header {
