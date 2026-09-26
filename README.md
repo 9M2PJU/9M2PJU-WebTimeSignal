@@ -1,7 +1,7 @@
 # 9M2PJU WebTimeSignal
 
 [![Live Production](https://img.shields.io/badge/Production-time.hamradio.my-238636?style=flat&logo=cloudflare)](https://time.hamradio.my)
-[![Test Suite](https://img.shields.io/badge/Unit%20Tests-19%20Passing-brightgreen?style=flat&logo=node.js)](https://time.hamradio.my/tests/)
+[![Test Suite](https://img.shields.io/badge/Unit%20Tests-22%20Passing-brightgreen?style=flat&logo=node.js)](https://time.hamradio.my/tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![PWA Ready](https://img.shields.io/badge/PWA-Offline%20Ready-orange?style=flat&logo=pwa)](manifest.webmanifest)
 

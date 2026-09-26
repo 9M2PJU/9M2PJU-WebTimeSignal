@@ -1,6 +1,6 @@
 {
   "name": "9m2pju-web-time-signal",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Browser-based LF Radio Time Signal Transmitter for Radio Clocks",
   "type": "module",
   "scripts": {

@@ -23,6 +23,7 @@ export class DCF77Encoder {
      */
     encodeFrame(date, options = {}) {
         const summerTime = !!options.summerTime;
+        const leapSecond = options.leapSecond ? 1 : 0; // 1 = leap second inserted in this minute
         const offsetHours = summerTime ? 2 : 1; // CEST (UTC+2) or CET (UTC+1)
 
         const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
@@ -83,8 +84,8 @@ export class DCF77Encoder {
         // s18: Standard Time (Z2)
         setBit(18, summerTime ? 0 : 1, `CET Standard Time (${summerTime ? '0' : '1'})`);
 
-        // s19: Leap second announcement (A2)
-        setBit(19, 0, 'Leap Sec Notice (0)');
+        // s19: Leap second announcement (A2) — 1 when a leap second is inserted
+        setBit(19, leapSecond, leapSecond ? 'Leap Sec Announce A2 (1)' : 'Leap Sec Notice (0)');
 
         // s20: Start of time information (S - Always 1!)
         setBit(20, 1, 'Time Info Start (1)');
@@ -195,8 +196,16 @@ export class DCF77Encoder {
         const p3 = BaseEncoder.calcEvenParity(dateBits);
         setBit(58, p3, `P3 Date Parity (${p3})`);
 
-        // s59: Missing pulse (Minute Sync Marker)
-        setBit(59, 0, 'Minute Sync (No Modulation)', true);
+        // s59: Missing pulse (Minute Sync Marker) in normal minutes.
+        // In a leap minute (61 seconds) s59 carries a normal 0-bit pulse and
+        // the inserted leap second itself follows unmodulated. Note: the
+        // scheduler still advances on 60s wall-clock epochs, so the extra
+        // second is signalled, not literally scheduled, in this simulator.
+        if (leapSecond === 1) {
+            setBit(59, 0, 'Leap Second 61st (0-bit pulse, leap follows)');
+        } else {
+            setBit(59, 0, 'Minute Sync (No Modulation)', true);
+        }
 
         return frame;
     }

@@ -2,7 +2,7 @@
  * 9M2PJU WebTimeSignal - Service Worker for Offline PWA Support
  */
 
-const CACHE_NAME = 'web-time-signal-v2.3.1';
+const CACHE_NAME = 'web-time-signal-v2.3.2';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

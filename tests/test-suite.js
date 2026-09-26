@@ -259,6 +259,37 @@ export function registerAllTests(runner) {
         }
     });
 
+    runner.addTest('DCF77Encoder leap second sets A2 and pulses second 59', () => {
+        const encoder = new DCF77Encoder();
+        const normal = encoder.encodeFrame(new Date('2024-07-20T18:45:00Z'), { summerTime: true });
+        if (normal[19].bitValue !== 0) throw new Error('DCF77 A2 should be 0 without leap second');
+        if (normal[59].toneDuration !== 0.0) throw new Error('DCF77 s59 must be missing pulse without leap second');
+
+        const leap = encoder.encodeFrame(new Date('2024-07-20T18:45:00Z'), { summerTime: true, leapSecond: 1 });
+        if (leap[19].bitValue !== 1) throw new Error('DCF77 A2 should be 1 with leap second');
+        if (leap[59].bitValue !== 0 || leap[59].toneDuration !== 0.1) {
+            throw new Error(`DCF77 s59 must be a normal 0-bit pulse with leap second, got bit=${leap[59].bitValue} dur=${leap[59].toneDuration}`);
+        }
+    });
+
+    runner.addTest('JJYEncoder leap second sets LS1 and LS2', () => {
+        const encoder = new JJYEncoder(40);
+        const date = new Date('2024-06-30T15:00:00Z');
+        const normal = encoder.encodeFrame(date, {});
+        if (normal[53].bitValue !== 0 || normal[54].bitValue !== 0) throw new Error('JJY LS bits should be 0 without leap second');
+        const leap = encoder.encodeFrame(date, { leapSecond: 1 });
+        if (leap[53].bitValue !== 1 || leap[54].bitValue !== 1) throw new Error('JJY LS1/LS2 should be 1 with positive leap second');
+    });
+
+    runner.addTest('WWVBEncoder leap second flag follows options', () => {
+        const encoder = new WWVBEncoder();
+        const date = new Date('2024-06-30T23:59:00Z');
+        const normal = encoder.encodeFrame(date, {});
+        if (normal[56].bitValue !== 0) throw new Error('WWVB s56 should be 0 without leap second');
+        const leap = encoder.encodeFrame(date, { leapSecond: 1 });
+        if (leap[56].bitValue !== 1) throw new Error('WWVB s56 should be 1 with leap second');
+    });
+
     runner.addTest('NTPSync.filterSamples rejects high-RTT outliers and keeps median', async () => {
         const { NTPSync } = await import('../js/ntp-sync.js');
         const samples = [

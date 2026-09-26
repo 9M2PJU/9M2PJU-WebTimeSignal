@@ -79,6 +79,7 @@ class App {
             antiPhaseToggle: document.getElementById('toggle-antiphase'),
             overdriveToggle: document.getElementById('toggle-overdrive'),
             summerTimeToggle: document.getElementById('toggle-summertime'),
+            leapSecondToggle: document.getElementById('toggle-leapsecond'),
             customTimeToggle: document.getElementById('toggle-custom-time'),
             customTimeGroup: document.getElementById('custom-time-group'),
             customTimeInput: document.getElementById('custom-time-input'),
@@ -185,6 +186,14 @@ class App {
         });
 
         this.dom.summerTimeToggle.addEventListener('change', async () => {
+            if (this.isTransmitting) {
+                this.audio.stop();
+                await this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
+            }
+            this._renderStaticFrame();
+        });
+
+        this.dom.leapSecondToggle.addEventListener('change', async () => {
             if (this.isTransmitting) {
                 this.audio.stop();
                 await this.audio.start(this.currentEncoder, () => this._getCurrentTime(), this._getOptions());
@@ -387,7 +396,7 @@ class App {
     _getOptions() {
         return {
             summerTime: this.dom.summerTimeToggle.checked,
-            leapSecond: 0
+            leapSecond: this.dom.leapSecondToggle.checked ? 1 : 0
         };
     }
 
