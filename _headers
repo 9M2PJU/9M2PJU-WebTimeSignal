@@ -2,7 +2,7 @@
   Cloudflare Pages headers: security + caching.
   HTML navigations stay network-first via sw.js; static assets cache long.
 */
-/*:
+/*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin

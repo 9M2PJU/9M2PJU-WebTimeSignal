@@ -59,7 +59,7 @@ runner.runAll().then(res => {
 
     staticCheck('_headers global rule matches all paths', () => {
         const headers = readFileSync(join(rootDir, '_headers'), 'utf8');
-        assert(/^\s*\/\*:/m.test(headers), 'global _headers rule must be "/*:" ("/:" matches nothing)');
+        assert(/^\s*\/\*\s*$/m.test(headers), 'global _headers rule must be "/*" on its own line ("/:" and "/*:" match nothing)');
     });
 
     staticCheck('CSP allows Cloudflare Insights beacon', () => {
