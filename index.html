@@ -45,7 +45,7 @@
     <meta name="apple-mobile-web-app-title" content="WebTimeSignal">
     <meta name="theme-color" content="#238636">
     <meta name="color-scheme" content="dark light">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://cloudflare.com https://1.1.1.1 https://1.0.0.1; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; worker-src 'self' blob:; media-src 'self' blob:">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://cloudflare.com https://1.1.1.1 https://1.0.0.1; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; worker-src 'self' blob:; media-src 'self' blob:">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
 
     <link rel="stylesheet" href="css/app.css">
@@ -83,7 +83,7 @@
                     <div>
                         <h1>
                             <span data-i18n="title">9M2PJU WebTimeSignal</span>
-                            <span class="badge">v2.3</span>
+                            <span class="badge">v2.3.1</span>
                         </h1>
                         <p data-i18n="subtitle">Browser-based LF Radio Time Signal Transmitter & Clock Synchronizer</p>
                     </div>
@@ -141,7 +141,7 @@
             </div>
 
             <div class="main-buttons">
-                <button id="btn-start-stop" class="btn btn-primary btn-action" data-i18n="start">
+                <button id="btn-start-stop" class="btn btn-primary btn-action">
                     <span class="btn-indicator"></span>
                     <span>Start Transmission</span>
                 </button>
@@ -261,6 +261,10 @@
                 <div class="legend-item">
                     <span class="legend-color missing"></span>
                     <span>Missing / Sync Pulse</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color multibit"></span>
+                    <span>Multi-bit (BPC 2-bit)</span>
                 </div>
             </div>
 

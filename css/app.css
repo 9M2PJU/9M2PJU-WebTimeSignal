@@ -663,6 +663,7 @@ canvas {
 .cell.bit1 { background-color: #d29922; }
 .cell.bit0 { background-color: #238636; }
 .cell.missing { background-color: #484f58; }
+.cell.multibit { background-color: #8957e5; }
 
 .cell.current {
     box-shadow: 0 0 12px #58a6ff, 0 0 4px #ffffff;
@@ -701,6 +702,7 @@ canvas {
 .legend-color.bit1 { background-color: #d29922; }
 .legend-color.bit0 { background-color: #238636; }
 .legend-color.missing { background-color: #484f58; }
+.legend-color.multibit { background-color: #8957e5; }
 
 /* Status Bar Info Strip */
 .info-strip {

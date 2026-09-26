@@ -468,14 +468,21 @@ class App {
             const cell = document.getElementById(`cell-${i}`);
             if (!cell) continue;
             const sym = frame[i];
+            const keepInspected = cell.classList.contains('inspected');
+            const keepCurrent = cell.classList.contains('current');
             cell.className = 'cell';
             if (sym.type === 'marker') {
                 cell.classList.add(sym.toneDuration === 0 ? 'missing' : 'marker');
             } else if (sym.bitValue === 1) {
                 cell.classList.add('bit1');
-            } else {
+            } else if (sym.bitValue === 0 || sym.bitValue === null) {
                 cell.classList.add('bit0');
+            } else {
+                // Multi-bit symbols (e.g. BPC 2-bit values 2 and 3)
+                cell.classList.add('multibit');
             }
+            if (keepInspected) cell.classList.add('inspected');
+            if (keepCurrent) cell.classList.add('current');
             cell.title = `Sec ${i}: ${sym.label} (${sym.symbol}, ${Math.round(sym.toneDuration * 1000)}ms)`;
         }
     }

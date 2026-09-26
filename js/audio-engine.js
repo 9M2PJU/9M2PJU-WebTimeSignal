@@ -302,7 +302,14 @@ export class AudioEngine {
      * @param {number} freq Base frequency in Hz
      */
     async playTestTone(freq = 13333.333) {
-        await this.init();
+        // Never rebuild the graph while transmitting: init() tears down the
+        // shared routing that already-scheduled pulses depend on, which would
+        // silence the transmission until restart.
+        if (!this.ctx) {
+            await this.init();
+        } else if (this.ctx.state === 'suspended') {
+            await this.ctx.resume();
+        }
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
 
